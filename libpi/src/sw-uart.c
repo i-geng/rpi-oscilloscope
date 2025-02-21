@@ -21,27 +21,27 @@
 void sw_uart_put8(sw_uart_t *uart, uint8_t b) {
     // use local variables to minimize any loads or stores
     int tx = uart->tx;
-    uint32_t T = uart->cycle_per_bit;
-    uint32_t cyc_start = cycle_cnt_read();
+    uint32_t n = uart->cycle_per_bit;
+    uint32_t s = cycle_cnt_read();
 
-    // Write a 0 (start) for T cycles
-    // gpio_set_off(tx);
-    // delay_ncycles(cyc_start, T);
-    write_cyc_until(tx, 0, cyc_start, T);
+    gpio_set_off(tx);
+    delay_ncycles(s, n);
 
-    // Write each bit in the given value
-    for (int i = 0; i < 8; i++) {
-      // gpio_write(tx, b & 1);
-      // gpio_set_on(tx);
-      // delay_ncycles(cyc_start, T * (i + 2));
-      // b = b >> 1;
-      write_cyc_until(tx, b & 1, cyc_start, T * (i + 2));
-      b = b >> 1;
+    for(int i = 0; i < 8; i++){
+        if(b&1){
+            gpio_set_on(tx);
+        }
+        else{
+            gpio_set_off(tx);
+        }
+        b >>= 1;
+        delay_ncycles(s, n * (2+i));
     }
 
-    // Write a 1 (stop) for at least T cycles
+    // Send stop bit 1
     gpio_set_on(tx);
-    delay_ncycles(cyc_start, T * 10);
+    delay_ncycles(s, n* 10);
+
 }
 
 // optional: do receive.
@@ -50,12 +50,32 @@ void sw_uart_put8(sw_uart_t *uart, uint8_t b) {
 int sw_uart_get8_timeout(sw_uart_t *uart, uint32_t timeout_usec) {
     unsigned rx = uart->rx;
 
+    uint32_t n = uart->cycle_per_bit;
+    uint8_t b = 0;
+    
     // right away (used to be return never).
     while(!wait_until_usec(rx, 0, timeout_usec))
         return -1;
 
     // todo("implement this code\n");
-    return 1;
+    uint32_t s = cycle_cnt_read();
+    delay_ncycles(s, n/2 + n);
+
+    // Read 8 bits
+    for(int i = 0; i < 8; i++){
+        b = (b >> 1);
+        if(gpio_read(rx)){
+            b |= 0x80;
+        }
+        delay_ncycles(s, n * (2+i) + n/2);
+    }
+
+    // Check stop bit
+    if(gpio_read(rx)==0){
+        return -1;
+    }
+
+    return b;
 }
 
 // finish implementing this routine.  
@@ -77,10 +97,14 @@ sw_uart_t sw_uart_init_helper(unsigned tx, unsigned rx,
         panic("too much diff: cyc_per_bit = %d * baud = %d\n", 
             cyc_per_bit, cyc_per_bit * baud);
 
-    // Setup rx,tx and initial state of tx pin (high)
+    // make sure you set TX to its correct default!
+    // Configure GPIO pins
     gpio_set_output(tx);
-    gpio_set_output(rx);
+    gpio_set_input(rx);
+    
+    // Set TX to default high (idle state for UART)
     gpio_set_on(tx);
+    
 
     return (sw_uart_t) { 
             .tx = tx, 

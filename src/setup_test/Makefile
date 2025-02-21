@@ -9,6 +9,3 @@ TTYUSB =
 RUN = 1
 
 include $(CS140E_FINAL_PROJ_PATH)/libpi/mk/Makefile.robust
-
-clean::
-	make -C clean

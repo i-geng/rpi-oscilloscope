@@ -27,25 +27,22 @@ void *read_file(unsigned *size, const char *name) {
     //    - fclose() the file descriptor
     //    - make sure any padding bytes have zeros.
     //    - return it.   
-    
-    // Get the size of the file
-    struct stat file_stats;
-    assert(stat(name, &file_stats) == 0);
-    *size = file_stats.st_size;
+    struct stat st;
+    // use stat() to get the size of the file.
+    stat(name, &st);
 
-    // Round up to multiple of 4
-    unsigned padded_size = (*size / 4 + 1) * 4;
+    *size = st.st_size;
+    // round up to a multiple of 4
+    unsigned padded_size = (*size + 3) & ~3;
 
-    // Allocate a buffer with calloc
-    void* buf = calloc(padded_size, 1);
-
-    // Read entire file into buffer
+    // allocate a buffer
+    char *buf = calloc(padded_size, sizeof(char));
+  
     int fd = open(name, O_RDONLY);
-    if (*size > 0) {
-      read_exact(fd, buf, *size);
+    // pad the buffer with zeros
+    if(*size > 0) {
+        read_exact(fd, buf, *size);
     }
-
-    // Close the file
     close(fd);
 
     return buf;

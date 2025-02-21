@@ -1,8 +1,8 @@
 // engler, cs140e: your code to find the tty-usb device on your laptop.
 #include <assert.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <limits.h>
 
 #include "libunix.h"
@@ -19,15 +19,13 @@ static const char *ttyusb_prefixes[] = {
 };
 
 static int filter(const struct dirent *d) {
-  // scan through the prefixes, returning 1 when you find a match.
-  // 0 if there is no match.
-  for (int i = 0; ttyusb_prefixes[i] != 0; i++) {
-    const char* prefix = ttyusb_prefixes[i];
-    if (strncmp(prefix, d->d_name, strlen(prefix)) == 0) {
-      return 1;
+    // scan through the prefixes, returning 1 when you find a match.
+    // 0 if there is no match.
+    for(const char **prefix = ttyusb_prefixes; *prefix; prefix++) {
+        if(strncmp(d->d_name, *prefix, strlen(*prefix)) == 0)
+            return 1;
     }
-  }
-  return 0;
+    return 0;
 }
 
 // find the TTY-usb device (if any) by using <scandir> to search for
@@ -36,87 +34,100 @@ static int filter(const struct dirent *d) {
 //  - device name.
 // error: panic's if 0 or more than 1 devices.
 char *find_ttyusb(void) {
-  // use <alphasort> in <scandir>
-  // return a malloc'd name so doesn't corrupt.
-  struct dirent **name_list;
-  int num_devices = scandir("/dev", &name_list, filter, alphasort);
+    // use <alphasort> in <scandir>
+    // return a malloc'd name so doesn't corrupt.
+    struct dirent **namelist;
+    int n;
 
-  if (num_devices <= 0 || num_devices > 1) {
-    panic("Found %d devices!\n", num_devices);
-  }
-
-  // Make a malloc'd copy of the device name and return it
-  const char* dir_name = "/dev/";
-  int total_len = strlen(dir_name) + strlen(name_list[0]->d_name) + 1;
-  char* device_path = (char*) malloc(total_len);
-  snprintf(device_path, total_len, "%s%s", dir_name, name_list[0]->d_name);
-  free(name_list);
-  return device_path;
+    n = scandir("/dev", &namelist, filter, alphasort);
+    if(n < 0){
+        panic("scandir failed\n");
+    }
+    if(n == 0){
+        panic("no ttyusb device found\n");
+    }
+    if(n > 1){
+        panic("more than one ttyusb device found\n");
+    }
+    char *name;
+    name = malloc(strlen("/dev/") + strlen(namelist[0]->d_name) + 1);
+    strcpy(name, "/dev/");
+    strcat(name, namelist[0]->d_name);
+    printf("name: %s\n", name);
+    free(namelist);
+    return name;
 }
 
 // return the most recently mounted ttyusb (the one
 // mounted last).  use the modification time 
 // returned by state.
 char *find_ttyusb_last(void) {
-  struct dirent **name_list;
-  int num_devices = scandir("/dev", &name_list, filter, alphasort);
-  if (num_devices <= 0) {
-    panic("Found %d devices!\n", num_devices);
-  }
+    struct dirent **namelist;
+    int n;
 
-  const char* dir_name = "/dev/";
-  time_t last_mod_time = 0;
-  char* last_device;
-  struct stat device_stats;
-
-  for (int i = 0; i < num_devices; i++) {
-    int total_len = strlen(dir_name) + strlen(name_list[i]->d_name) + 1;
-    char* device_path = (char*) malloc(total_len);
-    snprintf(device_path, total_len, "%s%s", dir_name, name_list[i]->d_name);
-
-    assert( stat(device_path, &device_stats) == 0 );
-    time_t device_mod_time = device_stats.st_mtime;
-
-    if (device_mod_time > last_mod_time) {
-      last_mod_time = device_mod_time;
-      last_device = device_path;
+    n = scandir("/dev", &namelist, filter, alphasort);
+    if(n == 0){
+        panic("no ttyusb device found\n");
     }
-  }
 
-  // Make a malloc'd copy of the device name and return it
-  return last_device;
+    int lastest = 0;
+    char* lastest_name = NULL;
+    for(int i = 0; i < n; i++){
+        char *name = malloc(strlen("/dev/") + strlen(namelist[i]->d_name) + 1);
+        strcpy(name, "/dev/");
+        strcat(name, namelist[i]->d_name);
+
+        struct stat st;
+        stat(name, &st);
+        if(st.st_mtime > lastest){
+            lastest = st.st_mtime;
+            // free the previous lastest_name if it exists
+            if(lastest_name){
+                free(lastest_name);
+            }
+            // allocate memory for the new lastest_name
+            lastest_name = malloc(strlen(name) + 1);
+            strcpy(lastest_name, name);
+        }
+        free(name);
+    }
+    free(namelist);
+    return lastest_name;
 }
 
 // return the oldest mounted ttyusb (the one mounted
 // "first") --- use the modification returned by
 // stat()
 char *find_ttyusb_first(void) {
-  struct dirent **name_list;
+    struct dirent **namelist;
+    int n;
 
-  int num_devices = scandir("/dev", &name_list, filter, alphasort);
-  if (num_devices <= 0) {
-    panic("Found %d devices!\n", num_devices);
-  }
-
-  const char* dir_name = "/dev/";
-  time_t first_mod_time = INT_MAX;
-  char* first_device;
-  struct stat device_stats;
-
-  for (int i = 0; i < num_devices; i++) {
-    int total_len = strlen(dir_name) + strlen(name_list[i]->d_name) + 1;
-    char* device_path = (char*) malloc(total_len);
-    snprintf(device_path, total_len, "%s%s", dir_name, name_list[i]->d_name);
-
-    assert( stat(device_path, &device_stats) == 0 );
-    time_t device_mod_time = device_stats.st_mtime;
-
-    if (device_mod_time < first_mod_time) {
-      first_mod_time = device_mod_time;
-      first_device = device_path;
+    n = scandir("/dev", &namelist, filter, alphasort);
+    if(n == 0){
+        panic("no ttyusb device found\n");
     }
-  }
 
-  // Make a malloc'd copy of the device name and return it
-  return first_device;
+    int oldest = INT_MAX;
+    char* oldest_name = NULL;
+    for(int i = 0; i < n; i++){
+        char *name = malloc(strlen("/dev/") + strlen(namelist[i]->d_name) + 1);
+        strcpy(name, "/dev/");
+        strcat(name, namelist[i]->d_name);
+
+        struct stat st;
+        stat(name, &st);
+        if(st.st_mtime < oldest){
+            oldest = st.st_mtime;
+            // free the previous oldest_name if it exists
+            if(oldest_name){
+                free(oldest_name);
+            }
+            // allocate memory for the new oldest_name
+            oldest_name = malloc(strlen(name) + 1);
+            strcpy(oldest_name, name);
+        }
+        free(name);
+    }
+    free(namelist);
+    return oldest_name;
 }

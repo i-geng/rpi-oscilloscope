@@ -95,21 +95,27 @@ static void emergency_printk(const char *fmt, ...) {
 #endif
 
 
+// Constants
+#define GPIO_TX 14
+#define GPIO_RX 15
+#define GPIO_FUNC_ALT5 2
+
+#define AUX_ENABLES_REG 0x20215004
+
+#define AUX_MU_IO_REG 0x20215040
+#define AUX_MU_IER_REG 0x20215044
+#define AUX_MU_IIR_REG 0x20215048
+#define AUX_MU_LCR_REG 0x2021504C
+#define AUX_MU_MCR_REG 0x20215050
+#define AUX_MU_LSR_REG 0x20215054
+
+#define AUX_MU_CNTL_REG 0x20215060
+#define AUX_MU_BAUD_REG 0x20215068
+
+
+
 //*****************************************************
 // the rest you should implement.
-
-enum {
-  AUXENB = 0x20215004,          // [Broadcom pg 9]
-  AUX_MU_IO_REG = 0x20215040,   // [Broadcom pg 11]
-  AUX_MU_IER_REG = 0x20215044,  // [Broadcom pg 12]
-  AUX_MU_IIR_REG = 0x20215048,  // [Broadcom pg 13]
-  AUX_MU_LCR_REG = 0x2021504C,  // [Broadcom pg 14]
-  AUX_MU_MCR_REG = 0x20215050,  // [Broadcom pg 14]
-  AUX_MU_LSR_REG = 0x20215054,  // [Broadcom pg 15]
-  AUX_MU_CNTL_REG = 0x20215060, // [Broadcom pg 16]
-  AUX_MU_STAT_REG = 0x20215064, // [Broadcom pg 18]
-  AUX_MU_BAUD = 0x20215068,     // [Broadcom pg 19]
-};
 
 // called first to setup uart to 8n1 115200  baud,
 // no interrupts.
@@ -117,135 +123,87 @@ enum {
 //
 //  later: should add an init that takes a baud rate.
 void uart_init(void) {
-  // NOTE: make sure you delete all print calls when
-  // done!
-  // emergency_printk("start here\n");
+    dev_barrier();
+    
+    // Setup GPIO
+    gpio_set_function(GPIO_TX, GPIO_FUNC_ALT5);
+    gpio_set_function(GPIO_RX, GPIO_FUNC_ALT5);
 
-  // perhaps confusingly: at this point normal printk works
-  // since we overrode the system putc routine.
-  // printk("write UART addresses in order\n");
+    dev_barrier();
 
-  dev_barrier();
+    // Enable mini-UART
+    unsigned auxenb = GET32(AUX_ENABLES_REG);
+    PUT32(AUX_ENABLES_REG, auxenb | 1);
+    dev_barrier();
 
-  /* Configure the GPIO 14 and 15 pins to use ALT5 function [Broadcom pg 102] */
-  gpio_set_function(GPIO_TX, GPIO_FUNC_ALT5);
-  gpio_set_function(GPIO_RX, GPIO_FUNC_ALT5);
+    // Disable TX and RX
+    PUT32(AUX_MU_CNTL_REG, 0);
 
-  dev_barrier();
 
-  /* Enable UART [Broadcom pg 9] */
-  uint32_t reg_val = GET32(AUXENB);
-  // Set bit0
-  PUT32(AUXENB, reg_val | 0b1);
+    // Disable interrupts
+    PUT32(AUX_MU_IER_REG, 0);
+    // Clear FIFOs
+    PUT32(AUX_MU_IIR_REG, 0x6);
+    // Set 8-bit mode
+    PUT32(AUX_MU_LCR_REG, 0x3);
+    // Set RTS
+    PUT32(AUX_MU_MCR_REG, 0x0);
+    
+    // Set baud rate
+    PUT32(AUX_MU_BAUD_REG, 270);
 
-  dev_barrier();
+    // Enable TX and RX
+    PUT32(AUX_MU_CNTL_REG, 3);
 
-  /* Disable TX and RX [Broadcom pg 17] */
-  // Clear bit0 and bit1 to disable the transmitter and receiver
-  PUT32(AUX_MU_CNTL_REG, 0b00);
-
-  /* Disable TX and RX interrupts [Broadcom pg 12] */
-  // Clear bit0 and bit1 to disable TX and RX interrupts
-  PUT32(AUX_MU_IER_REG, 0b00);
-
-  /* Clear the TX and RX FIFO queues [Broadcom pg 13] */
-  // Set bit1 and bit2 to clear the transmit and receive queues
-  PUT32(AUX_MU_IIR_REG, 0b110);
-
-  /* Configure UART to work in 8-bit mode [Broadcom pg 14] */
-  // Set bits0:1
-  PUT32(AUX_MU_LCR_REG, 0b11);
-
-  /* Why is this here? */
-  PUT32(AUX_MU_MCR_REG, 0);
-
-  /* Configure 115200 Baud [Broadcom pg 19] */
-  // Write 270 to bits0:15 (formula on Broadcom pg 11)
-  PUT32(AUX_MU_BAUD, 270);
-
-  /* Enable TX and RX [Broadcom pg 17] */
-  // Set bit0 and bit1
-  PUT32(AUX_MU_CNTL_REG, 0b11);
-
-  dev_barrier();
-
-  // delete everything to do w/ sw-uart when done since
-  // it trashes your hardware state and the system
-  // <putc>.
-  demand(!called_sw_uart_p, 
-      delete all sw-uart uses or hw UART in bad state);
+    dev_barrier();
 }
 
 // disable the uart: make sure all bytes have been
 // 
 void uart_disable(void) {
-  dev_barrier();
-
-  uart_flush_tx();
-
-  // Read the value of the AUXENB register [Broadcom pg 9]
-  uint32_t reg_val = GET32(AUXENB);
-
-  // Clear bit 0
-  reg_val &= 0b0;
-
-  // Write the new value back to the AUXENB register
-  PUT32(AUXENB, reg_val);
-
-  dev_barrier();
+    uart_flush_tx();
+    // Disable mini-UART
+    unsigned auxenb = GET32(AUX_ENABLES_REG);
+    PUT32(AUX_ENABLES_REG, auxenb & ~1);
+    dev_barrier();
 }
 
 // returns one byte from the RX (input) hardware
 // FIFO.  if FIFO is empty, blocks until there is 
 // at least one byte.
 int uart_get8(void) {
-  dev_barrier();
-
-  // Block until the FIFO has a byte
-  while (uart_has_data() == 0) {}
-
-  // [Broadcom pg 11]
-  uint32_t reg_val = GET32(AUX_MU_IO_REG);
-  int data = reg_val & 0xff;
-
-  dev_barrier();
-  return data;
+    dev_barrier();
+    while(!uart_has_data()){
+        ;
+    }
+    uint8_t c = GET32(AUX_MU_IO_REG) & 0xFF;
+    dev_barrier();
+    return c;
 }
 
 // returns 1 if the hardware TX (output) FIFO has room
 // for at least one byte.  returns 0 otherwise.
 int uart_can_put8(void) {
-  // If bit5 is set, then the TX FIFO has room [Broadcom pg 18]
-  uint32_t reg_val = GET32(AUX_MU_LSR_REG);
-  uint32_t can_put = reg_val >> 5;
-  can_put &= 0b1;
-
-  return can_put;
+    return GET32(AUX_MU_LSR_REG) & 0x20;
 }
 
 // put one byte on the TX FIFO, if necessary, waits
 // until the FIFO has space.
 int uart_put8(uint8_t c) {
-  dev_barrier();
-
-  // Block until the TX FIFO has space
-  while (uart_can_put8() == 0) {}
-
-  // When writing, only bits0:7 are taken [Broadcom pg 11]
-  PUT32(AUX_MU_IO_REG, c);
-
-  dev_barrier();
-  return c;
+    dev_barrier();
+    while(!uart_can_put8()){
+        ;
+    }
+    PUT32(AUX_MU_IO_REG, c);
+    dev_barrier();
+    return c;
 }
 
 // returns:
 //  - 1 if at least one byte on the hardware RX FIFO.
 //  - 0 otherwise
 int uart_has_data(void) {
-  // [Broadcom pg 18]
-  uint32_t reg_val = GET32(AUX_MU_LSR_REG);
-  int has_data = reg_val & 0b1;
-  return has_data;
+    return GET32(AUX_MU_LSR_REG) & 1;
 }
 
 // returns:
@@ -261,14 +219,7 @@ int uart_get8_async(void) {
 //  - 1 if TX FIFO empty AND idle.
 //  - 0 if not empty.
 int uart_tx_is_empty(void) {
-  dev_barrier();
-  
-  // [Broadcom pg 15]
-  uint32_t reg_val = GET32(AUX_MU_LSR_REG);
-  int tx_is_empty = reg_val & 0x40;
-
-  dev_barrier();
-  return tx_is_empty;
+    return GET32(AUX_MU_LSR_REG) & 0x40 ;
 }
 
 // return only when the TX FIFO is empty AND the
@@ -280,6 +231,6 @@ int uart_tx_is_empty(void) {
 // if reboot happens before all bytes have been
 // received.
 void uart_flush_tx(void) {
-  while(!uart_tx_is_empty())
-      rpi_wait();
+    while(!uart_tx_is_empty())
+        rpi_wait();
 }

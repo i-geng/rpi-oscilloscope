@@ -20,40 +20,10 @@ enum {
     GPIO_BASE = 0x20200000,
     gpio_set0  = (GPIO_BASE + 0x1C),
     gpio_clr0  = (GPIO_BASE + 0x28),
-    gpio_lev0  = (GPIO_BASE + 0x34)
+    gpio_lev0  = (GPIO_BASE + 0x34),
 
     // <you may need other values.>
 };
-
-// set GPIO function for <pin> (input, output, alt...).  
-// settings for other pins should be unchanged.
-void gpio_set_function(unsigned pin, gpio_func_t function) {
-  if (pin >= 32 && pin != 47) {
-    return;
-  }
-  // [Broadcom pg 92 lists valid function values]
-  if (function > 7) {
-    return;
-  }
-
-  // Figure out which register address we need to access
-  // [GPFSELn, Broadcom pg 90]
-  uint32_t gpfsel_addr = GPIO_BASE + (pin / 10) * 4;
-
-  // Read the value of the register
-  uint32_t reg_val = GET32(gpfsel_addr);
-
-  // Clear bit_first, (bit_first + 1), and (bit_first + 2)
-  uint32_t bit_first = (pin % 10) * 3;
-  uint32_t mask = ~(0b111 << bit_first);
-  reg_val &= mask;
-
-  // Write function bit pattern to correct 3 bits of reg_val
-  reg_val |= (function << bit_first);
-
-  // Write the new value back to the register
-  PUT32(gpfsel_addr, reg_val);
-}
 
 //
 // Part 1 implement gpio_set_on, gpio_set_off, gpio_set_output
@@ -63,48 +33,60 @@ void gpio_set_function(unsigned pin, gpio_func_t function) {
 //
 // note: fsel0, fsel1, fsel2 are contiguous in memory, so you
 // can (and should) use array calculations!
+
+void gpio_set_function(unsigned pin, gpio_func_t func) {
+  if(pin >= 32 && pin != 47)
+        return;
+  if (func > 7)
+    return;
+  // implement this
+  // use <gpio_fsel0>
+  int reg_id = pin / 10;
+  int reg_offset = pin % 10;
+  unsigned value = GET32(GPIO_BASE + reg_id * 4);
+  int shift = reg_offset * 3;
+  int bits = func;
+  unsigned mask = 7 << shift;
+
+  value &= ~mask;
+  value |= bits << shift;
+
+  PUT32(GPIO_BASE + reg_id * 4, value);
+}
+
+
 void gpio_set_output(unsigned pin) {
-  gpio_set_function(pin, 0b001);
+  gpio_set_function(pin, 1);
 }
 
 // set GPIO <pin> on.
 void gpio_set_on(unsigned pin) {
-  if(pin >= 32 && pin != 47)
-      return;
-
-  // Figure out which register address we need to write to
-  // [GPSETn, Broadcom pg 90]
-  uint32_t gpset_addr = gpio_set0 + (pin / 32) * 4;
-
-  // Write 0b1 to the correct bit to turn this pin on
-  uint32_t value = 0b1 << (pin % 32);
-  PUT32(gpset_addr, value);
+    if(pin >= 32 && pin != 47)
+        return;
+  // implement this
+  // use <gpio_set0>
+  int reg_id = pin / 32;
+  int reg_offset = pin % 32;
+  PUT32(gpio_set0 + reg_id * 4, 1 << reg_offset);
 }
 
 // set GPIO <pin> off
 void gpio_set_off(unsigned pin) {
     if(pin >= 32 && pin != 47)
         return;
-
-    // Figure out which register address we need to write to
-    // [GPCLRn, Broadcom pg 90]
-    uint32_t gpclr_addr = gpio_clr0 + (pin / 32) * 4;
-
-    // Write 0b1 to the correct bit to turn this pin off
-    uint32_t value = 0b1 << (pin % 32);
-    PUT32(gpclr_addr, value);
+  // implement this
+  // use <gpio_clr0>
+  int reg_id = pin / 32;
+  int reg_offset = pin % 32;
+  PUT32(gpio_clr0 + reg_id * 4, 1 << reg_offset);
 }
 
 // set <pin> to <v> (v \in {0,1})
 void gpio_write(unsigned pin, unsigned v) {
-  if (pin >= 32 && pin != 47) {
-    return;
-  }
-
-  if(v)
-      gpio_set_on(pin);
-  else
-      gpio_set_off(pin);
+    if(v)
+        gpio_set_on(pin);
+    else
+        gpio_set_off(pin);
 }
 
 //
@@ -113,24 +95,20 @@ void gpio_write(unsigned pin, unsigned v) {
 
 // set <pin> to input.
 void gpio_set_input(unsigned pin) {
-  gpio_set_function(pin, 0b000);
+  // implement.
+  gpio_set_function(pin, 0);
 }
 
 // return the value of <pin>
 int gpio_read(unsigned pin) {
-  if (pin >= 32 && pin != 47) {
+  if(pin >= 32 && pin != 47)
     return -1;
-  }
+  unsigned v = 0;
 
-  // Figure out which register address we need to access
-  // [GPIO Pin Level Register, Broadcom pg 96]
-  uint32_t gplev_addr = gpio_lev0 + (pin / 32 * 4);
-
-  // Read register, shift it by N bits to the right, & it with 1
-  unsigned v = GET32(gplev_addr);
-  uint32_t N = pin % 32;
-  v = v >> N;
-  v &= 1;
+  unsigned addr = gpio_lev0 + (pin / 32) * 4;
+  unsigned value = GET32(addr);
+  int shift = pin % 32;
+  v = (value >> shift) & 1;
 
   return DEV_VAL32(v);
 }
