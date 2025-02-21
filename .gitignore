@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# Binaries
+*.bin
+
 # Object files
 *.o
 *.ko
@@ -50,3 +53,16 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Staff .gitignore
+*~
+*.bak
+*.staff
+*-staff
+*.swp
+*.swo
+staff-*.txt
+staff-*.c
+.gdb_history
+*.scratch
+staff
