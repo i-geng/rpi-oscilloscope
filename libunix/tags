@@ -14,7 +14,7 @@ DEPS	staff-rules.mk	/^DEPS := $(LU)\/Makefile $(LU)\/staff-rules.mk$/;"	m
 HANDOFF_FD	libunix.h	/^#define HANDOFF_FD /;"	d
 LIBNAME	Makefile	/^LIBNAME = libunix.a$/;"	m
 LIB_SRC	Makefile	/^LIB_SRC := $(wildcard .\/*.c)$/;"	m
-LU	staff-rules.mk	/^LU := $(CS140E_2025_PATH)\/libunix$/;"	m
+LU	staff-rules.mk	/^LU := $(CS140E_FINAL_PROJ_PATH)\/libunix$/;"	m
 OBJS	staff-rules.mk	/^OBJS := $(foreach o, $(OBJS), $(BUILD_DIR)\/$(notdir $o))$/;"	m
 OBJS	staff-rules.mk	/^OBJS := $(patsubst %.c, %.o, $(SOURCES))$/;"	m
 Q	Q.h	/^typedef struct Q {$/;"	s

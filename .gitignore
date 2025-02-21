@@ -67,4 +67,9 @@ staff-*.c
 *.scratch
 staff
 
+# bin
+bin/pi-install
+
 *.list
+
+.DS_Store

@@ -1,4 +1,4 @@
-BOOTLOADER = my-install
+BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
 PROGS := hello_world.c
 
@@ -8,7 +8,7 @@ TTYUSB =
 # set RUN = 1 if you want the code to automatically run after building.
 RUN = 1
 
-include $(CS140E_2025_PATH)/libpi/mk/Makefile.robust
+include $(CS140E_FINAL_PROJ_PATH)/libpi/mk/Makefile.robust
 
 clean::
 	make -C clean
