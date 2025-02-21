@@ -66,6 +66,3 @@ staff-*.c
 .gdb_history
 *.scratch
 staff
-
-# bin
-bin/pi-install
