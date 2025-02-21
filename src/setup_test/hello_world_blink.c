@@ -15,7 +15,7 @@ void notmain(void) {
     putk("hello from rpi\n");
     for(int i = 0; i < 10; i++) {
         act_on();
-        delay_cycles(10000000);
+        delay_cycles(1000000);
         act_off();
         delay_cycles(10000000);
     }
