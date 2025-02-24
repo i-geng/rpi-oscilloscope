@@ -62,6 +62,7 @@ int i2c_has_error() {
   dev_barrier();
 
   uint32_t status = GET32(i2c->status);
+  printk("status=%b\n", status);
 
   // Check if there was a clock stretch timeout [BCM peripherals pg 31]
   // [9] -- CLKT Clock Stretch Timeout: 0 = No errors detected.
@@ -166,11 +167,11 @@ int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
 
   // Check that TX FIFO is empty [BCM peripherals pg 32]
   // [6] -- TXE FIFO Empty: 0 = FIFO is not empty. 1 = FIFO is empty.
-  uint32_t fifo_empty = bit_get(status, 6);
-  if (fifo_empty == 0) {  // If FIFO isn't empty, return 0
-    putk("fifo not empty\n");
-    return 0;
-  }
+  // uint32_t fifo_empty = bit_get(status, 6);
+  // if (fifo_empty == 0) {  // If FIFO isn't empty, return 0
+  //   putk("fifo not empty\n");
+  //   return 0;
+  // }
 
   // Check if any errors were detected
   if (i2c_has_error() == 1) {
@@ -230,57 +231,56 @@ int i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
 }
 
 void i2c_init(void) {
-  // todo("setup GPIO, setup i2c, sanity check results");
   // Put a device barrier, since this is a BCM peripheral
   dev_barrier();
 
-  // Setup GPIO SCL1 (pin 5) and SDA1 (pin3)
-  // Configure SCL1 and SDA1 pins to use ALT0 function [BCM peripherals pg 102]
-  uint32_t GPIO_SCL1 = 5;
-  uint32_t GPIO_SDA1 = 3;
-  gpio_set_function(GPIO_SCL1, GPIO_FUNC_ALT0);
-  gpio_set_function(GPIO_SDA1, GPIO_FUNC_ALT0);
-
+  // Setup GPIO SCL (pin 3) and SDA (pin2)
+  // Configure SCL and SDA pins to use ALT0 function [BCM peripherals pg 102]
+  uint32_t GPIO_SDA = 2;
+  uint32_t GPIO_SCL = 3;
+  gpio_set_function(GPIO_SDA, GPIO_FUNC_ALT0);
+  gpio_set_function(GPIO_SCL, GPIO_FUNC_ALT0);
   dev_barrier();
 
   // Enable I2C by writing to C register [BCM peripherals pg 29]
   // [15] -- I2C Enable: 1 = BSC controller is enabled. 0 = BSC controller is disabled.
   // [5:4] -- CLEAR FIFO Clear: 00 = No action. x1 = Clear FIFO. 1x = Clear FIFO.
-  uint32_t i2c_enable = (0b1 << 15) | (0b10 << 4);
-  PUT32(i2c->control, i2c_enable);
+  // uint32_t ctrl = 0b1 << 15;
+  uint32_t ctrl = (0b1 << 15) | (0b11 << 4);
+  put32(&i2c->control, ctrl);
   dev_barrier();
 
   // Write to Clock Divider Register [BCM peripherals pg 34]
   // SCL = core_clk / CDIV, where core_clk is 150 MHz
   // We set CDIV = 1500, so that SCL will be 100 kHz (I2C standard mode)
-  printk("cdiv default value = %x\n", GET32(i2c->clock_div) & 0xff);
-  
   uint32_t cdiv = 1500;
-  PUT32(i2c->clock_div, cdiv);
+  PUT32(&i2c->clock_div, cdiv);
+  dev_barrier();
 
   // Clear the BSC status register; access S register [BCM peripherals pg 31]
   // [9] -- CLKT Clock Stretch Timeout: 0 = No errors detected. Cleared by writing 1 to the field.
   // [8] -- ERR ACK Error: 0 = No errors detected. Cleared by writing 1 to the field.
   // [1] -- DONE Transfer Done: 0 = Transfer not completed. 1 = Transfer complete. Cleared by writing 1.
-  uint32_t status = (0b1 << 9) | (0b1 << 8) | (0b1 << 1);
-  PUT32(i2c->status, status);
-
+  // uint32_t status = (0b1 << 9) | (0b1 << 8) | (0b1 << 1);
+  uint32_t status = GET32(i2c->status);
+  status = status << 22;
+  status = status >> 22;
+  status |= (0b1 << 9) | (0b1 << 8) | (0b1 << 1);
+  put32(&i2c->status, status);
   dev_barrier();
-
-  // printk("%b\n", GET32(i2c->status));
 
   // Assert that there is no active transfer; check S register [BCM peripherals pg 31]
   // [0] -- TA Transfer Active: 0 = Transfer not active. 1 = Transfer active.
   assert(!i2c_transfer_is_active());
-
-  dev_barrier();
-
-  assert(i2c_is_enabled());
-
-  
 }
 
 // shortest will be 130 for i2c accel.
 void i2c_init_clk_div(unsigned clk_div) {
-  todo("same as init but set the clock divider");
+  i2c_init();
+
+  // Write to Clock Divider Register [BCM peripherals pg 34]
+  // SCL = core_clk / CDIV, where core_clk is 150 MHz
+  dev_barrier();
+  PUT32(&i2c->clock_div, clk_div);
+  dev_barrier();
 }
