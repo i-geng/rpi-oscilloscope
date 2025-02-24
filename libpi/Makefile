@@ -23,6 +23,8 @@ STAFF_OBJS  +=  ./staff-objs/uart.o
 
 STAFF_OBJS  +=  ./staff-objs/gpio-int.o 
 
+STAFF_OBJS  +=  ./staff-objs/staff-faster-i2c.o
+
 # these are all the locations that get made into
 # libpi.a
 #
