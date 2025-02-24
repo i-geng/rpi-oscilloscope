@@ -17,3 +17,5 @@ bin/pi-install
 *.list
 
 .DS_Store
+
+.vscode
