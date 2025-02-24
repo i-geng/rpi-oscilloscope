@@ -53,6 +53,7 @@ _Static_assert(offsetof(RPI_i2c_t, clock_delay) == 0x18, "wrong offset");
  *	 BSC2 : 0x7E80_5000 (0x20805000)
  * the PI can only use BSC1.
  */
+// static volatile RPI_i2c_t *i2c = (void *)0x20205000; // BSC0
 static volatile RPI_i2c_t *i2c = (void *)0x20804000; // BSC1
 
 // Checks for clock timeout and if any errors were detected.
@@ -80,6 +81,17 @@ int i2c_has_error() {
 
   dev_barrier();
   return 0;
+}
+
+// Returns 1 if i2c is enabled, 0 otherwise.
+int i2c_is_enabled() {
+  dev_barrier();
+
+  uint32_t ctrl = GET32(i2c->control);
+  uint32_t i2c_enabled = bit_get(ctrl, 15);
+  
+  dev_barrier();
+  return i2c_enabled;
 }
 
 // Check if a transfer is active.
@@ -143,6 +155,8 @@ int i2c_put8(uint8_t c) {
 int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
   dev_barrier();
 
+  assert(i2c_is_enabled());
+
   // 1. Setup to start a transfer
   // Wait until transfer is not active
   while (i2c_transfer_is_active() == 1) {}
@@ -154,11 +168,13 @@ int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
   // [6] -- TXE FIFO Empty: 0 = FIFO is not empty. 1 = FIFO is empty.
   uint32_t fifo_empty = bit_get(status, 6);
   if (fifo_empty == 0) {  // If FIFO isn't empty, return 0
+    putk("fifo not empty\n");
     return 0;
   }
 
   // Check if any errors were detected
   if (i2c_has_error() == 1) {
+    putk("i2c has error\n");
     return 0;
   }
 
@@ -179,8 +195,7 @@ int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
   // [0] -- 0 = WRITE packet transfer. 1 = READ packet transfer.
   // [7] -- Start Transfer: 0 = No action. 1 = Start a new transfer.
   uint32_t ctrl = GET32(i2c->control);
-  uint32_t i2c_enabled = bit_get(ctrl, 15);
-  assert(i2c_enabled == 1);   // sanity check to I2C is enabled
+  assert(i2c_is_enabled());
   ctrl = bit_clr(ctrl, 0);    // specify this is a WRITE
   ctrl = bit_set(ctrl, 7);    // start a new transfer
 
@@ -201,6 +216,7 @@ int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
 
   // Check for any errors.
   if (i2c_has_error()) {
+    putk("i2c has error\n");
     return 0;
   }
 
@@ -230,34 +246,38 @@ void i2c_init(void) {
   // Enable I2C by writing to C register [BCM peripherals pg 29]
   // [15] -- I2C Enable: 1 = BSC controller is enabled. 0 = BSC controller is disabled.
   // [5:4] -- CLEAR FIFO Clear: 00 = No action. x1 = Clear FIFO. 1x = Clear FIFO.
-  uint32_t i2c_enable = 0b1 << 15;
-  i2c_enable |= 0b01 << 4;
+  uint32_t i2c_enable = (0b1 << 15) | (0b10 << 4);
   PUT32(i2c->control, i2c_enable);
-
   dev_barrier();
 
   // Write to Clock Divider Register [BCM peripherals pg 34]
   // SCL = core_clk / CDIV, where core_clk is 150 MHz
   // We set CDIV = 1500, so that SCL will be 100 kHz (I2C standard mode)
+  printk("cdiv default value = %x\n", GET32(i2c->clock_div) & 0xff);
+  
   uint32_t cdiv = 1500;
   PUT32(i2c->clock_div, cdiv);
 
   // Clear the BSC status register; access S register [BCM peripherals pg 31]
-  // [9] -- CLKT Clock Stretch Timeout: 0 = No errors detected.
-  // [8] -- ERR ACK Error: 0 = No errors detected.
+  // [9] -- CLKT Clock Stretch Timeout: 0 = No errors detected. Cleared by writing 1 to the field.
+  // [8] -- ERR ACK Error: 0 = No errors detected. Cleared by writing 1 to the field.
   // [1] -- DONE Transfer Done: 0 = Transfer not completed. 1 = Transfer complete. Cleared by writing 1.
-  // [0] -- TA Transfer Active: 0 = Transfer not active. 1 = Transfer active.
-  uint32_t status = 0b1 << 1;
+  uint32_t status = (0b1 << 9) | (0b1 << 8) | (0b1 << 1);
   PUT32(i2c->status, status);
 
   dev_barrier();
 
+  // printk("%b\n", GET32(i2c->status));
+
   // Assert that there is no active transfer; check S register [BCM peripherals pg 31]
   // [0] -- TA Transfer Active: 0 = Transfer not active. 1 = Transfer active.
-  uint32_t val = GET32(i2c->status);
-  assert((val & 0b1) == 0);
+  assert(!i2c_transfer_is_active());
 
   dev_barrier();
+
+  assert(i2c_is_enabled());
+
+  
 }
 
 // shortest will be 130 for i2c accel.

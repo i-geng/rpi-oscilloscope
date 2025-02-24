@@ -2,7 +2,9 @@ BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
 PROGS := 0-test-id.c
 
-COMMON_SRC = i2c_driver.c
+# COMMON_SRC = i2c_driver.c
+# COMMON_SRC = debug.c
+STAFF_OBJS = staff-i2c.o
 
 # define this if you need to give the device for your pi
 TTYUSB = 
