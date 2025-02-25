@@ -58,23 +58,24 @@ void display_init(void) {
   display_send_command(0x8D);   // double byte command
   display_send_command(0x14);   // enable charge pump
 
-  // 12. Specify PAGE addressing mode [SSD1306 pg 34] (I don't think our chip has other modes)
+  // 12. Specify HORIZONTAL addressing mode [SSD1306 pg 35]
   // display_send_command(0x20);
-  // display_send_command(0x02);   // page addressing mode
+  // display_send_command(0x02);   // page addressing mode [SSD1306 pg 34]
   display_send_command(0x20);
   display_send_command(0x00);   // horizontal addressing mode
-    display_send_command(0x21);
-    display_send_command(0x00);
-    display_send_command(127);
-    display_send_command(0x22);
-    display_send_command(0x00);
-    display_send_command(0x7);
+  display_send_command(0x21);   // set column address
+  display_send_command(0x00);     // start at column 0
+  display_send_command(0x7F);     // end at column 127
+  display_send_command(0x22);   // set page address
+  display_send_command(0x00);     // start at page 0
+  display_send_command(0x07);     // end at page 7
 
   // 13. Display on [SSD1306 pg 62]
   display_send_command(0xAF);
 
   display_clear();
-  display_fill_buffer();
+  // display_fill_buffer();
+  display_draw_pixel(20, 10, 255);
 
   display_show();
 }
@@ -97,4 +98,9 @@ void display_clear(void) {
 void display_fill_buffer(void) {
   buffer[0] = 0x40;   // control byte to indicate data
   memset(display_buffer, 255, DISPLAY_BUFFER_SIZE);
+}
+
+void display_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
+  x = DISPLAY_WIDTH - x - 1;
+  display_buffer[x + (y / 8) * DISPLAY_WIDTH] |= (1 << (y & 7));
 }
