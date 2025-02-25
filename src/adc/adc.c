@@ -1,8 +1,9 @@
 // ASSUMING THE ADDRESS BYTE IS WRITTEN BY THE I2C HARDWARE
 
-#include "i2c_driver.h"
+#include "i2c.h"
+#include "rpi.h"
 
-#define ADC_ADDR 0x90
+#define ADC_ADDR 0x48
 
 enum ADC_REG {
   CONVERSION_REG, 
@@ -15,23 +16,23 @@ typedef struct {
   int pointed_reg;
 } ADC_STRUCT;
 
-void adc_write_to_reg(ADC_STRUCT adc, int reg, uint16_t 2byte){
+void adc_write_to_reg(ADC_STRUCT* adc, int reg, uint16_t bytes_2){
   uint8_t buf[3];
   
-  adc.pointed_reg = reg;
+  adc->pointed_reg = reg;
 
   buf[0] = (uint8_t) reg;
-  buf[1] = 2byte >> 8;
-  buf[2] = 2byte & 0xFF;
+  buf[1] = bytes_2 >> 8;
+  buf[2] = bytes_2 & 0xFF;
 
   int status = i2c_write(ADC_ADDR, buf, 3);
   assert(status);
 }
 
-void adc_point_to_reg(ADC_STRUCT adc, int reg){
+void adc_point_to_reg(ADC_STRUCT* adc, int reg){
   uint8_t buf[1];
   
-  adc.pointed_reg = reg;
+  adc->pointed_reg = reg;
 
   buf[0] = (uint8_t) reg;
 
@@ -39,34 +40,35 @@ void adc_point_to_reg(ADC_STRUCT adc, int reg){
   assert(status);
 }
 
-uint16_t adc_read_reg(ADC_STRUCT adc, int reg){
+uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
   uint8_t buf[2];
   
   // Check that we are pointing to the register
   // we're trying to read from, else die
-  assert(adc.pointed_reg == reg);
+  assert(adc->pointed_reg == reg);
 
   int status = i2c_read(ADC_ADDR, buf, 2);
   assert(status);
 
-  return (uint16_t) (buf[1] << 8)|buf[0];
+  return (uint16_t) (buf[0] << 8)|buf[1];
 }
 
-uint16_t adc_read(ADC_STRUCT adc){
+uint16_t adc_read(ADC_STRUCT* adc){
   return adc_read_reg(adc, CONVERSION_REG);
 }
 
 
-ADC_STRUCT adc_init(void) {
-  
-  ADC_STRUCT adc;
+ADC_STRUCT* adc_init(void) {
+
+  kmalloc_init();
+  ADC_STRUCT* adc = (ADC_STRUCT*) kmalloc(sizeof(ADC_STRUCT));
 
   uint16_t config = 0;
   
-  config |= 0b0   << 14;  // Don't need to set this
+  config |= 0b1   << 14;  // Don't need to set this
   config |= 0b100 << 12;  // Set pos input to AIN0, nev input to GND
   config |= 0b000 <<  9;  // TODO: Set PGA correctly
-  config |= 0b1   <<  8;  // Set to continuous mode
+  config |= 0b0   <<  8;  // Set to continuous mode
   config |= 0b111 <<  5;  // 860 SPS data rate.
   // don't care 4
   config |= 0b1   <<  3;  // Set Interrupt pin to active HI
