@@ -73,10 +73,8 @@ void display_init(void) {
   // 13. Display on [SSD1306 pg 62]
   display_send_command(0xAF);
 
+  // 14. Clear the screen to black
   display_clear();
-  display_fill_buffer();
-  display_draw_pixel(20, 10, COLOR_INVERT);
-
   display_show();
 }
 
@@ -116,3 +114,4 @@ void display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
       break;
   }
 }
+

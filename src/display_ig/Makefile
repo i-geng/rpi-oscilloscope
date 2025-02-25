@@ -1,10 +1,9 @@
 BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
-PROGS := 0-test.c
+PROGS := 0-test-draw.c
 
 COMMON_SRC = display.c
 STAFF_OBJS = staff-i2c.o
-STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/kmalloc.o
 
 # define this if you need to give the device for your pi
 TTYUSB = 
