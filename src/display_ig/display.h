@@ -6,13 +6,19 @@
 #define DISPLAY_HEIGHT 64
 #define DISPLAY_BUFFER_SIZE (DISPLAY_WIDTH * ((DISPLAY_HEIGHT + 7) / 8))
 
+typedef enum {
+  COLOR_WHITE,
+  COLOR_BLACK,
+  COLOR_INVERT,
+} color_t;
+
 void display_init(void);
 
 void display_send_command(uint8_t cmd);
 
 void display_show(void);
 
-void display_draw_pixel(uint16_t x, uint16_t y, uint16_t color);
+void display_draw_pixel(uint16_t x, uint16_t y, color_t color);
 
 void display_clear(void);
 

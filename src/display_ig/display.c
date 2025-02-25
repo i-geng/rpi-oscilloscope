@@ -74,8 +74,8 @@ void display_init(void) {
   display_send_command(0xAF);
 
   display_clear();
-  // display_fill_buffer();
-  display_draw_pixel(20, 10, 255);
+  display_fill_buffer();
+  display_draw_pixel(20, 10, COLOR_INVERT);
 
   display_show();
 }
@@ -100,7 +100,19 @@ void display_fill_buffer(void) {
   memset(display_buffer, 255, DISPLAY_BUFFER_SIZE);
 }
 
-void display_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
+void display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
+  // Convention: top left corner of screen is (0, 0)
   x = DISPLAY_WIDTH - x - 1;
-  display_buffer[x + (y / 8) * DISPLAY_WIDTH] |= (1 << (y & 7));
+
+  switch (color) {
+    case COLOR_WHITE:
+      display_buffer[x + (y / 8) * DISPLAY_WIDTH] |= (1 << (y & 7));
+      break;
+    case COLOR_BLACK:
+      display_buffer[x + (y / 8) * DISPLAY_WIDTH] &= ~(1 << (y & 7));
+      break;
+    case COLOR_INVERT:
+      display_buffer[x + (y / 8) * DISPLAY_WIDTH] ^= (1 << (y & 7));
+      break;
+  }
 }
