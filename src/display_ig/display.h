@@ -4,6 +4,7 @@
 #define DISPLAY_ADDRESS 0X3C
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 64
+#define DISPLAY_BUFFER_SIZE (DISPLAY_WIDTH * ((DISPLAY_HEIGHT + 7) / 8))
 
 void display_init(void);
 
