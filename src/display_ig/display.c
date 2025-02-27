@@ -147,3 +147,96 @@ void draw_horizontal_line(int16_t x_start, int16_t x_end, int16_t y,
     }
   }
 }
+
+void draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x, color_t color) {
+  y_start = y_start < 0 ? 0 : y_start;
+  y_end = y_end > DISPLAY_HEIGHT - 1 ? DISPLAY_HEIGHT - 1 : y_end;
+
+  if ((x >= 0) && (x < DISPLAY_WIDTH)) { // if x-coordinate is in bounds
+    int16_t line_height = y_end - y_start;
+    if (line_height > 0) { // if height is positive
+      // this display doesn't need ints for coordinates,
+      // use local byte registers for faster juggling
+      uint8_t y = y_start, h = line_height;
+      uint8_t *pBuf = &display_buffer[(y / 8) * DISPLAY_WIDTH + x];
+
+      // do the first partial byte, if necessary - this requires some masking
+      uint8_t mod = (y & 7);
+      if (mod) {
+        // mask off the high n bits we want to set
+        mod = 8 - mod;
+        // note - lookup table results in a nearly 10% performance
+        // improvement in fill* functions
+        uint8_t mask = ~(0xFF >> mod);
+        // static const uint8_t PROGMEM premask[8] = {0x00, 0x80, 0xC0, 0xE0,
+        //                                            0xF0, 0xF8, 0xFC, 0xFE};
+        // uint8_t mask = pgm_read_byte(&premask[mod]);
+
+        // adjust the mask if we're not going to reach the end of this byte
+        if (h < mod) {
+          mask &= (0XFF >> (mod - h));
+        }
+
+        switch (color) {
+        case COLOR_WHITE:
+          *pBuf |= mask;
+          break;
+        case COLOR_BLACK:
+          *pBuf &= ~mask;
+          break;
+        case COLOR_INVERT:
+          *pBuf ^= mask;
+          break;
+        }
+        pBuf += DISPLAY_WIDTH;
+      }
+
+      if (h >= mod) { // More to go?
+        h -= mod;
+        // Write solid bytes while we can - effectively 8 rows at a time
+        if (h >= 8) {
+          if (color == COLOR_INVERT) {
+            // separate copy of the code so we don't impact performance of
+            // black/white write version with an extra comparison per loop
+            do {
+              *pBuf ^= 0xFF; // Invert byte
+              pBuf += DISPLAY_WIDTH; // Advance pointer 8 rows
+              h -= 8;        // Subtract 8 rows from height
+            } while (h >= 8);
+          } else {
+            // store a local value to work with
+            uint8_t val = (color != COLOR_BLACK) ? 255 : 0;
+            do {
+              *pBuf = val;   // Set byte
+              pBuf += DISPLAY_WIDTH; // Advance pointer 8 rows
+              h -= 8;        // Subtract 8 rows from height
+            } while (h >= 8);
+          }
+        }
+
+        if (h) { // Do the final partial byte, if necessary
+          mod = h & 7;
+          // this time we want to mask the low bits of the byte,
+          // vs the high bits we did above
+          uint8_t mask = (1 << mod) - 1;
+          // note - lookup table results in a nearly 10% performance
+          // improvement in fill* functions
+          // static const uint8_t PROGMEM postmask[8] = {0x00, 0x01, 0x03, 0x07,
+          //                                             0x0F, 0x1F, 0x3F, 0x7F};
+          // uint8_t mask = pgm_read_byte(&postmask[mod]);
+          switch (color) {
+          case COLOR_WHITE:
+            *pBuf |= mask;
+            break;
+          case COLOR_BLACK:
+            *pBuf &= ~mask;
+            break;
+          case COLOR_INVERT:
+            *pBuf ^= mask;
+            break;
+          }
+        }
+      }
+    } // endif height is positive
+  }   // endif x-coordinates is in bounds
+}

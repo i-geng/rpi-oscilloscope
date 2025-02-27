@@ -41,4 +41,6 @@ void display_fill_buffer(void);
 
 void draw_horizontal_line(int16_t x_start, int16_t x_end, int16_t y, color_t color);
 
+void draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x, color_t color);
+ 
 #endif
