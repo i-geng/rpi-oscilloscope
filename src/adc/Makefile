@@ -4,8 +4,9 @@ PROGS := adc_test.c
 
 COMMON_SRC = adc.c
 
-STAFF_OBJS = staff-i2c.o
-STAFF_OBJS += kmalloc.o
+STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/kmalloc.o
+STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/staff-faster-i2c.o
+
 # define this if you need to give the device for your pi
 TTYUSB = 
 
