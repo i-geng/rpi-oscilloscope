@@ -2,6 +2,10 @@
 #include "display.h"
 #include "i2c.h"
 
+// This library is based on the ADAfruit SSD1306 library
+// https://github.com/adafruit/Adafruit_SSD1306/tree/master
+// https://github.com/adafruit/Adafruit-GFX-Library
+
 static uint8_t buffer[1 + DISPLAY_BUFFER_SIZE];
 static uint8_t *display_buffer = buffer + 1;
 
@@ -11,12 +15,8 @@ static uint8_t *display_buffer = buffer + 1;
 
 #define SWAP(x, y) do { typeof(x) SWAP = x; x = y; y = SWAP; } while (0)
 
+// Initialize the display. Requirement: I2C should have been initialized beforehand
 void display_init(void) {
-  // Initialize I2C with some settling time
-  delay_ms(100);
-  i2c_init_clk_div(1500);
-  delay_ms(100);
-
   // Display initialization flow [SSD1306 datasheet pg 64]
   // 0. Turn the display off to be safe [SSD1306 pg 28]
   display_send_command(0xAE);
@@ -84,28 +84,34 @@ void display_init(void) {
   display_show();
 }
 
-void display_send_command(uint8_t cmd) {
-  uint8_t cmd_buf[2] = {0x00, cmd};
-  i2c_write(DISPLAY_ADDRESS, cmd_buf, 2);
-}
-
+// Send display buffer to screen via I2C
+// Must be called to actually update the display!
 void display_show(void) {
   buffer[0] = 0x40; // control byte to indicate data
   i2c_write(DISPLAY_ADDRESS, buffer, sizeof(buffer));
 }
 
+// Helper function to send a byte over I2C
+void display_send_command(uint8_t cmd) {
+  uint8_t cmd_buf[2] = {0x00, cmd};
+  i2c_write(DISPLAY_ADDRESS, cmd_buf, 2);
+}
+
+// Clears the screen to black; no change until display_show() is called
 void display_clear(void) {
   buffer[0] = 0x40; // control byte to indicate data
   memset(display_buffer, 0, DISPLAY_BUFFER_SIZE);
 }
 
-void display_fill_buffer(void) {
+// Fills the display completely with white
+void display_fill_white(void) {
   buffer[0] = 0x40; // control byte to indicate data
-  memset(display_buffer, 255, DISPLAY_BUFFER_SIZE);
+  memset(display_buffer, 155, DISPLAY_BUFFER_SIZE);
 }
 
+// Draw a pixel at coordinates (x, y) with specified color
+// Convention: top left corner of screen is pixel (0, 0)
 void display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
-  // Convention: top left corner of screen is pixel (0, 0)
   x = DISPLAY_WIDTH - x - 1;
   switch (color) {
   case COLOR_WHITE:
@@ -122,7 +128,8 @@ void display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
 
 void display_draw_axes(void) {}
 
-// Draw a horizontal line from x_start to x_end (inclusive)
+// Draw a horizontal line from (x_start, y) to (x_end, y), inclusive of both endpoins
+// Convention: top left corner of screen is pixel (0, 0)
 void display_draw_horizontal_line(int16_t x_start, int16_t x_end, int16_t y,
                           color_t color) {
   
@@ -160,6 +167,8 @@ void display_draw_horizontal_line(int16_t x_start, int16_t x_end, int16_t y,
   }
 }
 
+// Draw a vertical line from (y_start, x) to (y_end, x), inclusive of both endpoints
+// Convention: top left corner of screen is pixel (0, 0)
 void display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x,
                         color_t color) {
   y_start = y_start < 0 ? 0 : y_start;
@@ -374,37 +383,21 @@ static const unsigned char font[] = {
   0x3C, 0x00, 0x00, 0x00, 0x00, 0x00 // #255 NBSP
 };
 
-void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color,
-                    color_t bg, uint8_t size) {
+// Draw an ASCII character at (x, y) with specified color
+// Convention: top left corner of screen is pixel (0, 0)
+void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color) {
   if ((x >= DISPLAY_WIDTH) ||              // Clip right
       (y >= DISPLAY_HEIGHT) ||             // Clip bottom
-      ((x + 6 * size - 1) < 0) || // Clip left
-      ((y + 8 * size - 1) < 0))   // Clip top
+      ((x + 6 - 1) < 0) || // Clip left
+      ((y + 8 - 1) < 0))   // Clip top
     return;
-
-  uint8_t size_x = size;
-  uint8_t size_y = size;
 
   for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
     uint8_t line = pgm_read_byte(&font[c * 5 + i]);
     for (int8_t j = 0; j < 8; j++, line >>= 1) {
       if (line & 1) {
-        if (size_x == 1 && size_y == 1)
-          display_draw_pixel(x + i, y + j, color);
-        // else
-        //   writeFillRect(x + i * size_x, y + j * size_y, size_x, size_y, color);
-      } else if (bg != color) {
-        if (size_x == 1 && size_y == 1)
-          display_draw_pixel(x + i, y + j, bg);
-        // else
-        //   writeFillRect(x + i * size_x, y + j * size_y, size_x, size_y, bg);
+        display_draw_pixel(x + i, y + j, color);
       }
     }
   }
-  // if (bg != color) { // If opaque, draw vertical line for last column
-  //   if (size_x == 1 && size_y == 1)
-  //     writeFastVLine(x + 5, y, 8, bg);
-  //   else
-  //     writeFillRect(x + 5 * size_x, y, size_x, 8 * size_y, bg);
-  // }
 }

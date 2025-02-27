@@ -1,6 +1,10 @@
 #ifndef __RPI_DISPLAY_H__
 #define __RPI_DISPLAY_H__
 
+// This library is based on the ADAfruit SSD1306 library
+// https://github.com/adafruit/Adafruit_SSD1306/tree/master
+// https://github.com/adafruit/Adafruit-GFX-Library
+
 typedef enum {
   COLOR_WHITE,
   COLOR_BLACK,
@@ -14,36 +18,49 @@ enum {
   DISPLAY_BUFFER_SIZE = DISPLAY_WIDTH * ((DISPLAY_HEIGHT + 7) / 8),
 
   // Ranges for x- and y-axes (real numbers, not pixel coordinates)
-  x_axis_min = 0,
-  x_axis_max = 100,
-  y_axis_min = 0,
-  y_axis_max = 50,
+  graph_x_axis_min = 0,
+  graph_x_axis_max = 100,
+  graph_y_axis_min = 0,
+  graph_y_axis_max = 50,
 
   // Pixel margins around the graph
-  left_margin = 5,
-  right_margin = 0,
-  top_margin = 0,
-  bottom_margin = 5,
+  graph_margin_left = 0,
+  graph_margin_right = 0,
+  graph_margin_top = 0,
+  graph_margin_bottom = 0,
 
 };
 
+// Initialize the display. Requirement: I2C should have been initialized beforehand
 void display_init(void);
 
-void display_send_command(uint8_t cmd);
-
+// Send display buffer to screen via I2C
+// Must be called to actually update the display!
 void display_show(void);
 
-void display_draw_pixel(uint16_t x, uint16_t y, color_t color);
+// Helper function to send a byte over I2C
+void display_send_command(uint8_t cmd);
 
+// Clears the screen to black; no change until display_show() is called
 void display_clear(void);
 
-void display_fill_buffer(void);
+// Fills the display completely with white
+void display_fill_white(void);
 
+// Draw a pixel at coordinates (x, y) with specified color
+// Convention: top left corner of screen is pixel (0, 0)
+void display_draw_pixel(uint16_t x, uint16_t y, color_t color);
+
+// Draw a horizontal line from (x_start, y) to (x_end, y), inclusive of both endpoins
+// Convention: top left corner of screen is pixel (0, 0)
 void display_draw_horizontal_line(int16_t x_start, int16_t x_end, int16_t y, color_t color);
 
+// Draw a vertical line from (y_start, x) to (y_end, x), inclusive of both endpoints
+// Convention: top left corner of screen is pixel (0, 0)
 void display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x, color_t color);
 
-void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color,
-  color_t bg, uint8_t size);
-  
+// Draw an ASCII character at (x, y) with specified color
+// Convention: top left corner of screen is pixel (0, 0)
+void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color);
+
 #endif
