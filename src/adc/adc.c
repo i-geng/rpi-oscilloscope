@@ -2,19 +2,9 @@
 
 #include "i2c.h"
 #include "rpi.h"
+#include "adc.h"
 
 #define ADC_ADDR 0x48
-
-enum ADC_REG {
-  CONVERSION_REG, 
-  CONFIG_REG,
-  LO_THRESH_REG,
-  HI_THRESH_REG
-};
-
-typedef struct {
-  int pointed_reg;
-} ADC_STRUCT;
 
 void adc_write_to_reg(ADC_STRUCT* adc, int reg, uint16_t bytes_2){
   uint8_t buf[3];
@@ -58,7 +48,9 @@ uint16_t adc_read(ADC_STRUCT* adc){
 }
 
 
-ADC_STRUCT* adc_init(void) {
+ADC_STRUCT* adc_init(int interrupt_pin){
+  i2c_init();
+  // i2c_init_clk_div(374);
 
   kmalloc_init();
   ADC_STRUCT* adc = (ADC_STRUCT*) kmalloc(sizeof(ADC_STRUCT));
@@ -86,6 +78,12 @@ ADC_STRUCT* adc_init(void) {
 
   // Point to digital output register to prepare for reads
   adc_point_to_reg(adc, CONVERSION_REG);
+
+
+  // Setting up the CE pin
+  adc->interrupt_pin = interrupt_pin;
+  gpio_set_function(adc->interrupt_pin, GPIO_FUNC_INPUT);
+  gpio_set_pulldown(adc->interrupt_pin);
 
   return adc;
 }

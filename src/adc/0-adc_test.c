@@ -1,10 +1,10 @@
 #include "adc.h"
-#include "i2c.h"
+// #include "i2c.h"
 
 void notmain(){
 
-    i2c_init();
-    ADC_STRUCT* adc = adc_init();
+    int interrupt_pin = 17;
+    ADC_STRUCT* adc = adc_init(interrupt_pin);
 
     for (int j = 0; j < 1000; j ++){
         // printk("Attempting to read");
