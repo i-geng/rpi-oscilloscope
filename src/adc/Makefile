@@ -1,7 +1,7 @@
 BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
-PROGS := 1-interrupt_adc_test.c 
-# PROGS := 2-interrupt_adc_test.c 
+# PROGS := 1-interrupt_adc_test.c 
+PROGS := 2-interrupt_adc_test.c 
 
 COMMON_SRC += adc.c
 COMMON_SRC += interrupts-asm.S 
