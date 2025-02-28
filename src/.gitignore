@@ -5,7 +5,7 @@
 *.bin
 
 # Object files
-*.o 
+# *.o 
 
 *.ko
 *.obj
