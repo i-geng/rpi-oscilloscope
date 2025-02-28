@@ -1,9 +1,10 @@
 BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
-PROGS := 2-interrupt_adc_test.c 
+PROGS := 1-interrupt_adc_test.c 
+# PROGS := 2-interrupt_adc_test.c 
 
-COMMON_SRC = adc.c
-COMMON_SRC := interrupts-asm.S 
+COMMON_SRC += adc.c
+COMMON_SRC += interrupts-asm.S 
 
 STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/kmalloc.o
 # STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/staff-faster-i2c.o
