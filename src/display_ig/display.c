@@ -411,32 +411,58 @@ void display_draw_character(int16_t x, int16_t y, unsigned char c,
 
 
 void display_draw_graph_axes(void) {
-  // TODO: graph margins
-
   // Draw horizontal line for the graph x-axis
   float graph_y_axis_range = graph_y_axis_max - graph_y_axis_min;
-  int16_t y_horizontal = graph_y_axis_max / graph_y_axis_range * DISPLAY_HEIGHT;
-  display_draw_horizontal_line(0, DISPLAY_WIDTH, y_horizontal, COLOR_WHITE);
+  int16_t y_horizontal = graph_y_axis_max / graph_y_axis_range * (DISPLAY_HEIGHT - graph_margin_top - graph_margin_bottom) + graph_margin_top;
+  display_draw_horizontal_line(graph_margin_left, DISPLAY_WIDTH - graph_margin_right, y_horizontal, COLOR_WHITE);
 
   // Draw vertical line for the graph y-axis
   float graph_x_axis_range = graph_x_axis_max - graph_x_axis_min;
-  int16_t x_vertical = -graph_x_axis_min / graph_x_axis_range * DISPLAY_WIDTH;
-  display_draw_vertical_line(0, DISPLAY_HEIGHT, x_vertical, COLOR_WHITE);
+  int16_t x_vertical = -graph_x_axis_min / graph_x_axis_range * (DISPLAY_WIDTH - graph_margin_left - graph_margin_right) + graph_margin_left;
+  display_draw_vertical_line(graph_margin_top, DISPLAY_HEIGHT - graph_margin_bottom, x_vertical, COLOR_WHITE);
 
   // Draw label for x-axis maximum
-  char buffer[6];
-  snprintk(buffer, sizeof(buffer), "%d", graph_x_axis_max);
+  char x_buffer[6];
+  snprintk(x_buffer, sizeof(x_buffer), "%d", graph_x_axis_max);
 
-  for (size_t i = 1; i <= strlen(buffer); i++) {
-    display_draw_character(DISPLAY_WIDTH - 5 * i,
+  for (size_t i = 1; i <= strlen(x_buffer); i++) {
+    display_draw_character(DISPLAY_WIDTH - graph_margin_right - 5 * i,
       y_horizontal + 1,
-      buffer[strlen(buffer) - i],
+      x_buffer[strlen(x_buffer) - i],
       COLOR_WHITE);
   }
 
-  // display_draw_character(DISPLAY_WIDTH - 5, y_horizontal, 'x', COLOR_WHITE);
-
   // Draw label for y-axis maximum
-  // display_draw_character(x_vertical - 5, 0 + 2, 'y', COLOR_WHITE);
+  char y_buffer[6];
+  snprintk(y_buffer, sizeof(y_buffer), "%d", graph_y_axis_max);
+
+  for (size_t i = 1; i <= strlen(y_buffer); i++) {
+    display_draw_character(x_vertical - 5 * i,
+      graph_margin_top,
+      y_buffer[strlen(y_buffer) - i],
+      COLOR_WHITE);
+  }
+}
+
+void display_draw_graph_data(void) {
+  float x_values[10] = {0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.8};
+  float y_values[10] = {4.997, 1.617, 1.617, 1.617, 0.016, 0.016, 1.085, 1.085, 4.223, 4.223};
+
+  float graph_x_axis_range = graph_x_axis_max - graph_x_axis_min;
+  int16_t x_vertical = -graph_x_axis_min / graph_x_axis_range * (DISPLAY_WIDTH - graph_margin_left - graph_margin_right) + graph_margin_left;
+  float graph_y_axis_range = graph_y_axis_max - graph_y_axis_min;
+  int16_t y_horizontal = graph_y_axis_max / graph_y_axis_range * (DISPLAY_HEIGHT - graph_margin_top - graph_margin_bottom) + graph_margin_top;
+
+  for (size_t i = 0; i < 10; i++) {
+    // Graph a single point
+    float x = x_values[i];
+    float y = y_values[i];
+
+    x = (x - (float)graph_x_axis_min) / graph_x_axis_range * ((float)DISPLAY_WIDTH - (float)graph_margin_left - (float)graph_margin_right) + (float)graph_margin_left;
+    // y = ((float)graph_y_axis_max - y) / graph_y_axis_range * ((float)DISPLAY_HEIGHT - (float)graph_margin_top - (float)graph_margin_bottom) + (float)graph_margin_top;
+    y = ((float)graph_y_axis_max - y) / graph_y_axis_range * ((float)DISPLAY_HEIGHT - (float)graph_margin_top - (float)graph_margin_bottom) + (float)graph_margin_top;
+
+    display_draw_pixel(x, y, COLOR_WHITE);
+  }
 
 }

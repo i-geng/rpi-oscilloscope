@@ -18,16 +18,16 @@ enum {
   DISPLAY_BUFFER_SIZE = DISPLAY_WIDTH * ((DISPLAY_HEIGHT + 7) / 8),
 
   // Ranges for x- and y-axes (real numbers, not pixel coordinates)
-  graph_x_axis_min = -10,
-  graph_x_axis_max = 100,
-  graph_y_axis_min = -20,
-  graph_y_axis_max = 50,
+  graph_x_axis_min = 0,
+  graph_x_axis_max = 11,
+  graph_y_axis_min = 0,
+  graph_y_axis_max = 5,
 
   // Pixel margins around the graph
-  graph_margin_left = 0,
-  graph_margin_right = 0,
-  graph_margin_top = 0,
-  graph_margin_bottom = 0,
+  graph_margin_left = 10,
+  graph_margin_right = 5,
+  graph_margin_top = 5,
+  graph_margin_bottom = 10
 
 };
 
@@ -64,5 +64,7 @@ void display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x, color
 void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color);
 
 void display_draw_graph_axes(void);
+
+void display_draw_graph_data(void);
 
 #endif
