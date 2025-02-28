@@ -18,9 +18,9 @@ enum {
   DISPLAY_BUFFER_SIZE = DISPLAY_WIDTH * ((DISPLAY_HEIGHT + 7) / 8),
 
   // Ranges for x- and y-axes (real numbers, not pixel coordinates)
-  graph_x_axis_min = 0,
+  graph_x_axis_min = -10,
   graph_x_axis_max = 100,
-  graph_y_axis_min = 0,
+  graph_y_axis_min = -20,
   graph_y_axis_max = 50,
 
   // Pixel margins around the graph
@@ -62,5 +62,7 @@ void display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x, color
 // Draw an ASCII character at (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
 void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color);
+
+void display_draw_graph_axes(void);
 
 #endif
