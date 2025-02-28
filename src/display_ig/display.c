@@ -409,6 +409,7 @@ void display_draw_character(int16_t x, int16_t y, unsigned char c,
   }
 }
 
+
 void display_draw_graph_axes(void) {
   // TODO: graph margins
 
@@ -423,8 +424,19 @@ void display_draw_graph_axes(void) {
   display_draw_vertical_line(0, DISPLAY_HEIGHT, x_vertical, COLOR_WHITE);
 
   // Draw label for x-axis maximum
-  display_draw_character(DISPLAY_WIDTH - 5, y_horizontal, 'x', COLOR_WHITE);
+  char buffer[6];
+  snprintk(buffer, sizeof(buffer), "%d", graph_x_axis_max);
+
+  for (size_t i = 1; i <= strlen(buffer); i++) {
+    display_draw_character(DISPLAY_WIDTH - 5 * i,
+      y_horizontal + 1,
+      buffer[strlen(buffer) - i],
+      COLOR_WHITE);
+  }
+
+  // display_draw_character(DISPLAY_WIDTH - 5, y_horizontal, 'x', COLOR_WHITE);
 
   // Draw label for y-axis maximum
-  display_draw_character(x_vertical - 5, 0 + 2, 'y', COLOR_WHITE);
+  // display_draw_character(x_vertical - 5, 0 + 2, 'y', COLOR_WHITE);
+
 }
