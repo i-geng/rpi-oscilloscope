@@ -410,14 +410,21 @@ void display_draw_character(int16_t x, int16_t y, unsigned char c,
 }
 
 void display_draw_graph_axes(void) {
-  // Where to draw horizontal line for the graph x-axis?
-  float graph_y_axis_range = graph_y_axis_max - graph_y_axis_min;
-  int16_t horizontal = graph_y_axis_max / graph_y_axis_range * DISPLAY_HEIGHT;
-  display_draw_horizontal_line(0, DISPLAY_WIDTH, horizontal, COLOR_WHITE);
+  // TODO: graph margins
 
-  // Where to draw vertical line for the graph y-axis?
+  // Draw horizontal line for the graph x-axis
+  float graph_y_axis_range = graph_y_axis_max - graph_y_axis_min;
+  int16_t y_horizontal = graph_y_axis_max / graph_y_axis_range * DISPLAY_HEIGHT;
+  display_draw_horizontal_line(0, DISPLAY_WIDTH, y_horizontal, COLOR_WHITE);
+
+  // Draw vertical line for the graph y-axis
   float graph_x_axis_range = graph_x_axis_max - graph_x_axis_min;
-  int16_t vertical = -graph_x_axis_min / graph_x_axis_range * DISPLAY_WIDTH;
-  printk("v=%d\n", vertical);
-  display_draw_vertical_line(0, DISPLAY_HEIGHT, vertical, COLOR_WHITE);
+  int16_t x_vertical = -graph_x_axis_min / graph_x_axis_range * DISPLAY_WIDTH;
+  display_draw_vertical_line(0, DISPLAY_HEIGHT, x_vertical, COLOR_WHITE);
+
+  // Draw label for x-axis maximum
+  display_draw_character(DISPLAY_WIDTH - 5, y_horizontal, 'x', COLOR_WHITE);
+
+  // Draw label for y-axis maximum
+  display_draw_character(x_vertical - 5, 0 + 2, 'y', COLOR_WHITE);
 }
