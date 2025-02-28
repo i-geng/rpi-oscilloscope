@@ -1,8 +1,8 @@
 BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
-COMMON_SRC := i2c.c
+COMMON_SRC := my_i2c.c display.c
 
-PROGS := main.c
+PROGS := tests/display_numbers.c
 
 # define this if you need to give the device for your pi
 TTYUSB = 
