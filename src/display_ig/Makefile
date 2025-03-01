@@ -11,4 +11,6 @@ TTYUSB =
 # set RUN = 1 if you want the code to automatically run after building.
 RUN = 0
 
+LIB_POST += $(CS140E_2025_PATH)/lib/libgcc.a
+
 include $(CS140E_FINAL_PROJ_PATH)/libpi/mk/Makefile.robust
