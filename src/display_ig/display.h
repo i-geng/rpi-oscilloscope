@@ -16,20 +16,31 @@ enum {
   DISPLAY_WIDTH = 128,
   DISPLAY_HEIGHT = 64,
   DISPLAY_BUFFER_SIZE = DISPLAY_WIDTH * ((DISPLAY_HEIGHT + 7) / 8),
+};
+
+typedef struct {
+  // Pixel margins around the graph
+  uint8_t margin_left;
+  uint8_t margin_right;
+  uint8_t margin_top;
+  uint8_t margin_bottom;
 
   // Ranges for x- and y-axes (real numbers, not pixel coordinates)
-  graph_x_axis_min = 0,
-  graph_x_axis_max = 11,
-  graph_y_axis_min = 0,
-  graph_y_axis_max = 5,
+  int16_t x_axis_min;
+  int16_t x_axis_max;
+  float x_axis_span;
+  
+  int16_t y_axis_min;
+  int16_t y_axis_max;
+  float y_axis_span;
 
-  // Pixel margins around the graph
-  graph_margin_left = 10,
-  graph_margin_right = 5,
-  graph_margin_top = 5,
-  graph_margin_bottom = 10
+  // Where is the horizontal line for the graph x-axis?
+  uint16_t y_horizontal;
 
-};
+  // Where is the vertical line for the graph y-axis?
+  uint16_t x_vertical;
+
+} display_graph_configuration_t;
 
 // Initialize the display. Requirement: I2C should have been initialized beforehand
 void display_init(void);
@@ -62,6 +73,8 @@ void display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x, color
 // Draw an ASCII character at (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
 void display_draw_character(int16_t x, int16_t y, unsigned char c, color_t color);
+
+void display_configure_graph_axes(int16_t x_min, int16_t x_max, int16_t y_min, int16_t y_max);
 
 void display_draw_graph_axes(void);
 
