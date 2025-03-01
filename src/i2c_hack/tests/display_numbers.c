@@ -6,7 +6,7 @@
 void notmain(void) {
 
     delay_ms(100);
-    i2c_init_clk_div(1500);
+    my_i2c_init_clk_div(1500);
     delay_ms(100);
 
     display_init();
@@ -20,5 +20,11 @@ void notmain(void) {
     // Must call display_show() to actually update the screen
     display_show();
 
-    while (1) {}
+    delay_ms(1000);
+    display_fill_white();
+    display_show();
+
+    delay_ms(1000);
+    display_clear();
+    display_show();
 }
