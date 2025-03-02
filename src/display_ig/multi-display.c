@@ -10,7 +10,8 @@ static uint8_t multi_display_buffer[MULTI_DISPLAY_BUFFER_SIZE];
 
 display_t display_arr[NUM_DISPLAYS] = {
   {0x3C, i2c_write},
-  {0x3D, i2c_write},
+  {0x3C, i2c_write},
+  {0x3C, i2c_write},
 };
 
 static graph_configuration_t graph_config = {
@@ -112,23 +113,25 @@ void multi_display_show(void) {
       int d_col_offset = d * DISPLAY_WIDTH;
 
       // Copy the portion for this display
-      memcpy(&display_buffers[d][1 + d_row_offset], 
+      // Important: index iS (NUM_DISPLAYS - d - 1)
+      // intuition: buffer is copied from right-to-left, not left-to-right
+      memcpy(&display_buffers[NUM_DISPLAYS - d - 1][1 + d_row_offset], 
              &multi_display_buffer[multi_row_offset + d_col_offset], 
              DISPLAY_WIDTH);
     }
   }
 
   for (int d = 0; d < NUM_DISPLAYS; d++) {
-    if (d == 1) {
+    if (d == 2) {
       // Set first byte to 0x40 (control byte)
       display_buffers[d][0] = 0x40;
-      i2c_write(0x3C, display_buffers[d], 1 + DISPLAY_BUFFER_SIZE);
-      // display_arr[d].i2c_write_func(display_arr[d].device_address, display_buffers[d], 1 + DISPLAY_BUFFER_SIZE);
+      display_arr[d].i2c_write_func(display_arr[d].device_address, display_buffers[d], 1 + DISPLAY_BUFFER_SIZE);
     }
   }
 }
 
 // Helper function to send a byte over I2C
+// TODO: extend for multiple displays
 void display_send_command(uint8_t cmd) {
   uint8_t cmd_buf[2] = {0x00, cmd};
   i2c_write(DISPLAY_ADDRESS, cmd_buf, 2);
@@ -148,7 +151,6 @@ void multi_display_fill_white(void) {
 // Convention: top left corner of screen is pixel (0, 0)
 void multi_display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
   x = MULTI_DISPLAY_WIDTH - x - 1;
-  // x = DISPLAY_WIDTH - x - 1;
   switch (color) {
   case COLOR_WHITE:
     multi_display_buffer[(y / 8) * MULTI_DISPLAY_WIDTH + x] |= (1 << (y & 7));
@@ -437,29 +439,29 @@ void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
   }
 }
 
-void display_configure_graph_axes(int16_t x_min, int16_t x_max, int16_t y_min, int16_t y_max) {
+void multi_display_configure_graph_axes(int16_t x_min, int16_t x_max, int16_t y_min, int16_t y_max) {
   // Graph config
   graph_config.x_axis_span = graph_config.x_axis_max - graph_config.x_axis_min;
   graph_config.y_axis_span = graph_config.y_axis_max - graph_config.y_axis_min;
 
-  graph_config.y_horizontal = graph_config.y_axis_max / graph_config.y_axis_span * (DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) + graph_config.margin_top;
-  graph_config.x_vertical = -graph_config.x_axis_min / graph_config.x_axis_span * (DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) + graph_config.margin_left;
+  graph_config.y_horizontal = graph_config.y_axis_max / graph_config.y_axis_span * (MULTI_DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) + graph_config.margin_top;
+  graph_config.x_vertical = -graph_config.x_axis_min / graph_config.x_axis_span * (MULTI_DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) + graph_config.margin_left;
 
 }
 
-void display_draw_graph_axes(void) {
+void multi_display_draw_graph_axes(void) {
   // Draw horizontal line for the graph x-axis
-  multi_display_draw_horizontal_line(graph_config.margin_left, DISPLAY_WIDTH - graph_config.margin_right, graph_config.y_horizontal, COLOR_WHITE);
+  multi_display_draw_horizontal_line(graph_config.margin_left, MULTI_DISPLAY_WIDTH - graph_config.margin_right, graph_config.y_horizontal, COLOR_WHITE);
 
   // Draw vertical line for the graph y-axis
-  multi_display_draw_vertical_line(graph_config.margin_top, DISPLAY_HEIGHT - graph_config.margin_bottom, graph_config.x_vertical, COLOR_WHITE);
+  multi_display_draw_vertical_line(graph_config.margin_top, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom, graph_config.x_vertical, COLOR_WHITE);
 
   // Draw label for x-axis maximum
   char x_buffer[6];
   snprintk(x_buffer, sizeof(x_buffer), "%d", graph_config.x_axis_max);
 
   for (size_t i = 1; i <= strlen(x_buffer); i++) {
-    multi_display_draw_character(DISPLAY_WIDTH - graph_config.margin_right - 5 * i,
+    multi_display_draw_character(MULTI_DISPLAY_WIDTH - graph_config.margin_right - 5 * i,
       graph_config.y_horizontal + 1,
       x_buffer[strlen(x_buffer) - i],
       COLOR_WHITE);
@@ -477,7 +479,7 @@ void display_draw_graph_axes(void) {
   }
 }
 
-void display_draw_graph_data(void) {
+void multi_display_draw_graph_data(void) {
   float x_values[10] = {0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.8};
   float y_values[10] = {4.997, 1.617, 1.617, 1.617, 0.016, 0.016, 1.085, 1.085, 4.223, 4.223};
 
@@ -491,8 +493,8 @@ void display_draw_graph_data(void) {
     float x = x_values[i];
     float y = y_values[i];
 
-    x = (x - graph_config.x_axis_min) / graph_config.x_axis_span * (DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) + graph_config.margin_left;
-    y = (graph_config.y_axis_max - y) / graph_config.y_axis_span * (DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) + graph_config.margin_top;
+    x = (x - graph_config.x_axis_min) / graph_config.x_axis_span * (MULTI_DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) + graph_config.margin_left;
+    y = (graph_config.y_axis_max - y) / graph_config.y_axis_span * (MULTI_DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) + graph_config.margin_top;
 
     multi_display_draw_pixel(x, y, COLOR_WHITE);
   }
