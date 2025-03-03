@@ -161,6 +161,6 @@ void multi_display_update_graph_configuration(void);
 
 void multi_display_draw_graph_axes(void);
 
-void multi_display_draw_graph_data(void);
+void multi_display_draw_graph_data(float *x_values, float *y_values, uint8_t N, color_t color);
 
 #endif

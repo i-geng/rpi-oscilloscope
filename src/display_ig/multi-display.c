@@ -389,11 +389,7 @@ void multi_display_draw_graph_axes(void) {
   }
 }
 
-void multi_display_draw_graph_data(void) {
-  float x_values[10] = {0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.8};
-  float y_values[10] = {4.997, 1.617, 1.617, 1.617, 0.016,
-                        0.016, 1.085, 1.085, 4.223, 4.223};
-
+void multi_display_draw_graph_data(float *x_values, float *y_values, uint8_t N, color_t color) {
   // Precompute scaling factors outside the loop
   float x_scale = (MULTI_DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) / graph_config.x_axis_span;
   float y_scale = (MULTI_DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) / graph_config.y_axis_span;
@@ -401,11 +397,11 @@ void multi_display_draw_graph_data(void) {
   float x_offset = graph_config.margin_left - graph_config.x_axis_min * x_scale;
   float y_offset = graph_config.margin_top + graph_config.y_axis_max * y_scale;
 
-  for (size_t i = 0; i < 10; i++) {
+  for (size_t i = 0; i < N; i++) {
     // Graph a single point
     float x = x_values[i] * x_scale + x_offset;
     float y = -y_values[i] * y_scale + y_offset;
 
-    multi_display_draw_pixel(x, y, COLOR_WHITE);
+    multi_display_draw_pixel(x, y, color);
   }
 }
