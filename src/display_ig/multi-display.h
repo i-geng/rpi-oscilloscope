@@ -1,17 +1,17 @@
 #ifndef __RPI_MULTI_DISPLAY_H__
 #define __RPI_MULTI_DISPLAY_H__
 
-#include "rpi.h"
+#include "rpi.h"  // Make sure "rpi.h" is the first include!
 #include "i2c.h"
 
 // Multi-display library to draw to multiple SSD1306
 // displays that are placed horizontally next to each other.
 
-// This library is based on the ADAfruit SSD1306 library
+// This library is based on the ADAfruit SSD1306 library:
 // https://github.com/adafruit/Adafruit_SSD1306
 // https://github.com/adafruit/Adafruit-GFX-Library
 
-// This is declared here as extern, and defined in standard-ascii-font.c
+// This is declared here as extern and defined in standard-ascii-font.c
 extern const unsigned char standard_ascii_font[];
 
 enum {

@@ -1,8 +1,8 @@
-#include "rpi.h"
+#include "rpi.h"  // Make sure "rpi.h" is the first include!
 #include "multi-display.h"
 #include "i2c.h"
 
-// This library is based on the ADAfruit SSD1306 library
+// This library is based on the ADAfruit SSD1306 library:
 // https://github.com/adafruit/Adafruit_SSD1306
 // https://github.com/adafruit/Adafruit-GFX-Library
 
