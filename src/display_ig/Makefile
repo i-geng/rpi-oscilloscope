@@ -5,6 +5,7 @@ BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
 PROGS := 1-test-multi.c
 COMMON_SRC = multi-display.c
+COMMON_SRC += standard-ascii-font.c
 
 STAFF_OBJS = staff-i2c.o
 
