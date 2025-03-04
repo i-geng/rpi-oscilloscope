@@ -1,5 +1,6 @@
 #include "rpi.h"
 #include "adc.h"
+#include "i2c.h"
 #include "gpio.h"
 
 //-------------------------------------------------------------------
@@ -63,7 +64,7 @@ extern void PUT32(unsigned, unsigned);
 extern void dev_barrier(void);
 
 // We'll store ADC samples here
-volatile uint16_t adc_data[1000];
+volatile float adc_data[1000];
 volatile int sample_count = 0;
 volatile uint32_t start_time, last_time;
 
@@ -186,6 +187,8 @@ void interrupt_vector(unsigned pc) {
 // 4) MAIN CODE
 //-------------------------------------------------------------------
 void notmain(void) {
+    i2c_init();
+
     printk("Initializing interrupts...\n");
     interrupt_init();   // set up system-level IRQ state
 
@@ -200,7 +203,7 @@ void notmain(void) {
     enable_gpio_int_0_31();
 
     printk("Initializing ADC...\n");
-    adc = adc_init(interrupt_pin);
+    adc = adc_init(interrupt_pin, PGA_6144);
 
     // Reset sampling state
     sample_count = 0;
@@ -217,7 +220,7 @@ void notmain(void) {
     }
 
     for(int i = 0; i<1000; i ++){
-        printk("%d \n", adc_data[i]);
+        printk("%f \n", adc_data[i]);
     }
 
     disable_interrupts();

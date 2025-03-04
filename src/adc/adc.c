@@ -43,23 +43,33 @@ uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
   return (uint16_t) (buf[0] << 8)|buf[1];
 }
 
-uint16_t adc_read(ADC_STRUCT* adc){
-  return adc_read_reg(adc, CONVERSION_REG);
+float adc_read(ADC_STRUCT* adc){
+  uint16_t data = adc_read_reg(adc, CONVERSION_REG);
+
+  return (data / (32768.0)) * adc->pga_val;
 }
 
 
-ADC_STRUCT* adc_init(int interrupt_pin){
-  i2c_init();
-  // i2c_init_clk_div(374);
+ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain){
 
   kmalloc_init();
   ADC_STRUCT* adc = (ADC_STRUCT*) kmalloc(sizeof(ADC_STRUCT));
+
+  adc->pga_gain = gain;
+  switch(gain){
+    case PGA_6144: adc->pga_val = 6.144; break;
+    case PGA_4096: adc->pga_val = 4.096; break;
+    case PGA_2048: adc->pga_val = 2.048; break;
+    case PGA_1024: adc->pga_val = 1.024; break;
+    case PGA_0512: adc->pga_val = 0.512; break;
+    case PGA_0256: adc->pga_val = 0.256; break;
+  }
 
   uint16_t config = 0;
   
   config |= 0b1   << 14;  // Don't need to set this
   config |= 0b100 << 12;  // Set pos input to AIN0, nev input to GND
-  config |= 0b000 <<  9;  // TODO: Set PGA correctly
+  config |= gain <<  9;  // TODO: Set PGA correctly
   config |= 0b0   <<  8;  // Set to continuous mode
   config |= 0b111 <<  5;  // 860 SPS data rate.
   // don't care 4
