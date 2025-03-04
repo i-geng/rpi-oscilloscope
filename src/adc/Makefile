@@ -1,8 +1,9 @@
 BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
 # PROGS := 1-interrupt_adc_test.c 
-PROGS := 2-interrupt_adc_test.c 
+# PROGS := 2-interrupt_adc_test.c 
 # PROGS := 0-adc_test.c
+PROGS := signal_processing.c
 
 COMMON_SRC += adc.c
 COMMON_SRC += interrupts-asm.S 
@@ -12,6 +13,9 @@ STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/kmalloc.o
 STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/staff-i2c.o
 
 LIB_POST += $(CS140E_2025_PATH)/lib/libgcc.a
+
+# for math
+# LIB_POST += lm
 
 # define this if you need to give the device for your pi
 TTYUSB = 
