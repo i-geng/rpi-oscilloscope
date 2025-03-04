@@ -95,7 +95,24 @@ int vprintk(const char *fmt, va_list ap) {
                 frac_part *= 1000000;  // Adjust precision here
                 int frac_int = (int)(frac_part + 0.5);  // Round properly
 
+
+                // Manually handle leading zeros
+                int temp = frac_int;
+                int num_digits = 0;
+
+                // Count how many digits are in frac_int
+                while (temp > 0) {
+                    num_digits++;
+                    temp /= 10;
+                }
+
+                // Print leading zeros if necessary
+                for (int i = 0; i < (6 - num_digits); i++)
+                    putchar('0');
+
+                // Print the fractional part
                 emit_val(10, frac_int);
+
                 break;
             }
             // leading 0x
