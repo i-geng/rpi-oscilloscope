@@ -82,6 +82,9 @@ void my_i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
 }
 
 void my_i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
+    
+    dev_barrier();
+
     unsigned int remaining_bytes = nbytes;
     unsigned int data_index = 0;
     // Set the address
@@ -128,4 +131,13 @@ void my_i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
     return;
+}
+
+void my_i2c_init_clk_div(unsigned clk_div){
+    
+    my_i2c_init();
+
+    dev_barrier();
+    PUT32(BSC_DIV, clk_div);
+    dev_barrier();
 }
