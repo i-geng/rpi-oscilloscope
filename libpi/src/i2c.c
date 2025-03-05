@@ -13,7 +13,7 @@
 #define BSC_FIFO    (BSC_BASE + 0x10)  // FIFO register
 #define BSC_DIV     (BSC_BASE + 0x14)  // Clock divider register
 
-void my_i2c_init(void) {
+void i2c_init(void) {
     dev_barrier();
     // Set GPIO pins 2 and 3 for I2C function (alt function 0)
     gpio_set_function(2, 4);  // SDA
@@ -27,8 +27,8 @@ void my_i2c_init(void) {
     dev_barrier();
 }
 
-void my_i2c_init_clk_div(unsigned clk_div) {
-    my_i2c_init();
+void i2c_init_clk_div(unsigned clk_div) {
+    i2c_init();
 
     // Write to Clock Divider Register [BCM peripherals pg 34]
     // SCL = core_clk / CDIV, where core_clk is 150 MHz
@@ -37,7 +37,7 @@ void my_i2c_init_clk_div(unsigned clk_div) {
     dev_barrier();
 }
 
-void my_i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
+int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
     unsigned int remaining_bytes = nbytes;
     unsigned int data_index = 0;
 
@@ -78,10 +78,10 @@ void my_i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
     // Set done bit
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
-    return;
+    return 0;
 }
 
-void my_i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
+int i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
     
     dev_barrier();
 
@@ -130,5 +130,5 @@ void my_i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
     // Set done bit
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
-    return;
+    return 0;
 }

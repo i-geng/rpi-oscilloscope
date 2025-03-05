@@ -1,7 +1,7 @@
 #include "rpi.h"
 #include "display.h"
 #include "i2c.h"
-#include "my_i2c.h"
+// #include "i2c.h"
 
 // This library is based on the ADAfruit SSD1306 library
 // https://github.com/adafruit/Adafruit_SSD1306/tree/master
@@ -95,13 +95,13 @@ void display_init(void) {
 // Must be called to actually update the display!
 void display_show(void) {
   buffer[0] = 0x40; // control byte to indicate data
-  my_i2c_write(DISPLAY_ADDRESS, buffer, sizeof(buffer));
+  i2c_write(DISPLAY_ADDRESS, buffer, sizeof(buffer));
 }
 
 // Helper function to send a byte over I2C
 void display_send_command(uint8_t cmd) {
   uint8_t cmd_buf[2] = {0x00, cmd};
-  my_i2c_write(DISPLAY_ADDRESS, cmd_buf, 2);
+  i2c_write(DISPLAY_ADDRESS, cmd_buf, 2);
 }
 
 // Clears the screen to black; no change until display_show() is called
