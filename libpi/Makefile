@@ -23,7 +23,13 @@ STAFF_OBJS  +=  ./staff-objs/uart.o
 
 STAFF_OBJS  +=  ./staff-objs/gpio-int.o 
 
-STAFF_OBJS  +=  ./staff-objs/staff-faster-i2c.o
+############## I2C ###############
+# If you want to use our i2c.c, comment out the following line:
+# STAFF_OBJS  +=  ./staff-objs/staff-faster-i2c.o
+# 
+# And uncomment the following line:
+SRC += src/i2c.c
+##################################
 
 # these are all the locations that get made into
 # libpi.a
