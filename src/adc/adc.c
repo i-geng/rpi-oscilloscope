@@ -3,8 +3,9 @@
 #include "i2c.h"
 #include "rpi.h"
 #include "adc.h"
+// #include "stdlib.h"
 
-#define ADC_ADDR 0x48
+// #define ADC_ADDR 0x48
 
 void adc_write_to_reg(ADC_STRUCT* adc, int reg, uint16_t bytes_2){
   uint8_t buf[3];
@@ -15,7 +16,7 @@ void adc_write_to_reg(ADC_STRUCT* adc, int reg, uint16_t bytes_2){
   buf[1] = bytes_2 >> 8;
   buf[2] = bytes_2 & 0xFF;
 
-  int status = i2c_write(ADC_ADDR, buf, 3);
+  int status = i2c_write(adc->addr, buf, 3);
   assert(status);
 }
 
@@ -26,7 +27,7 @@ void adc_point_to_reg(ADC_STRUCT* adc, int reg){
 
   buf[0] = (uint8_t) reg;
 
-  int status = i2c_write(ADC_ADDR, buf, 1);
+  int status = i2c_write(adc->addr, buf, 1);
   assert(status);
 }
 
@@ -37,25 +38,26 @@ uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
   // we're trying to read from, else die
   assert(adc->pointed_reg == reg);
 
-  int status = i2c_read(ADC_ADDR, buf, 2);
+  int status = i2c_read(adc->addr, buf, 2);
   assert(status);
 
   return (uint16_t) (buf[0] << 8)|buf[1];
 }
 
 float adc_read(ADC_STRUCT* adc){
-  uint16_t data = adc_read_reg(adc, CONVERSION_REG);
+  int16_t data = adc_read_reg(adc, CONVERSION_REG);
 
   return (data / (32768.0)) * adc->pga_val;
 }
 
 
-ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain){
+ADC_STRUCT* adc_init(uint8_t addr, int interrupt_pin, ADC_GAIN gain){
 
-  kmalloc_init();
+  // kmalloc_init();
   ADC_STRUCT* adc = (ADC_STRUCT*) kmalloc(sizeof(ADC_STRUCT));
 
   adc->pga_gain = gain;
+  adc->addr = addr;
   switch(gain){
     case PGA_6144: adc->pga_val = 6.144; break;
     case PGA_4096: adc->pga_val = 4.096; break;
