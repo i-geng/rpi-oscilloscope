@@ -74,30 +74,6 @@ int vprintk(const char *fmt, va_list ap) {
                 emit_val(16, lo);
                 break;
 
-            case 'f': {
-                double f = va_arg(ap, double); // Floats are promoted to double in variadic args
-                if (f < 0) {
-                    putchar('-');
-                    f = -f;
-                }
-
-                // Extract integer and fractional parts
-                int int_part = (int)f;
-                double frac_part = f - int_part;
-
-                // Print integer part
-                emit_val(10, int_part);
-
-                // Print decimal point
-                putchar('.');
-
-                // Extract 6 decimal places
-                frac_part *= 1000000;  // Adjust precision here
-                int frac_int = (int)(frac_part + 0.5);  // Round properly
-
-                emit_val(10, frac_int);
-                break;
-            }
             // leading 0x
             case 'x':  
             case 'p': 
