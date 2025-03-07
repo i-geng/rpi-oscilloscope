@@ -7,7 +7,6 @@ void notmain(void) {
     for (int i = 0; i < 96; i++) {
         float theta = (2 * i * PI / 32.0f);
         // Normalize theta to [-pi, pi]
-        theta = fmod(theta + PI, 2 * PI) - PI;
         x[i] = sin(theta);
     }
     // Print the signal
