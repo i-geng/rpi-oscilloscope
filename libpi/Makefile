@@ -31,6 +31,11 @@ STAFF_OBJS  +=  ./staff-objs/gpio-int.o
 SRC += src/i2c.c
 ##################################
 
+######### MULTI-DISPLAY ##########
+SRC += src/multi-display.c
+SRC += src/standard-ascii-font.c
+##################################
+
 # these are all the locations that get made into
 # libpi.a
 #
