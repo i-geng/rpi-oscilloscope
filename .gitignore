@@ -11,9 +11,13 @@ staff-*.c
 *.scratch
 staff
 
+# Libraries
+*.a
+
 # bin
 bin/pi-install
 
 *.list
 
 .DS_Store
+.vscode/*
