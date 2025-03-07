@@ -150,7 +150,7 @@ void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
                                   color_t color);
 
 void multi_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
-                                       color_t color, uint8_t size);
+                                       color_t color, uint8_t size_x, uint8_t size_y);
 
 void multi_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color);
 
