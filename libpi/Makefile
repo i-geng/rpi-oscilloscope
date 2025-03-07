@@ -4,12 +4,11 @@
 # to add your gpio.c:
 #   1. copy gpio.c to libpi/src/gpio.c
 #   2. comment out:
-STAFF_OBJS  +=  ./staff-objs/gpio.o
+# STAFF_OBJS  +=  ./staff-objs/gpio.o
 #   3. uncomment:
-# SRC += src/gpio.c
-
-STAFF_OBJS  +=  ./staff-objs/staff-sw-uart.o
-# SRC += src/sw-uart.c
+SRC += src/gpio.c
+SRC += src/uart.c
+SRC += src/sw-uart.c
 
 
 # if you want to use your own pullup-puldown
@@ -18,23 +17,8 @@ STAFF_OBJS  +=  ./staff-objs/staff-sw-uart.o
 # 3. comment out ours below:
 STAFF_OBJS  +=  ./staff-objs/gpio-pud.o
 
-STAFF_OBJS  +=  ./staff-objs/uart.o
-# SRC += src/uart.c
-
+# STAFF_OBJS  +=  ./staff-objs/uart.o
 STAFF_OBJS  +=  ./staff-objs/gpio-int.o 
-
-############## I2C ###############
-# If you want to use our i2c.c, comment out the following line:
-# STAFF_OBJS  +=  ./staff-objs/staff-faster-i2c.o
-# 
-# And uncomment the following line:
-SRC += src/i2c.c
-##################################
-
-######### MULTI-DISPLAY ##########
-SRC += src/multi-display.c
-SRC += src/standard-ascii-font.c
-##################################
 
 # these are all the locations that get made into
 # libpi.a
