@@ -3,7 +3,8 @@ BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 # PROGS := 0-test-draw.c
 # COMMON_SRC = display.c
 
-PROGS := 1-test-multi.c
+# PROGS := 1-test-multi.c
+PROGS := 1-test-stats.c
 COMMON_SRC = multi-display.c
 COMMON_SRC += standard-ascii-font.c
 
