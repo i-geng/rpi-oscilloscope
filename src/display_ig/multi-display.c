@@ -314,6 +314,37 @@ void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
   }
 }
 
+void multi_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color) {
+  for (int16_t i = x; i < x + w; i++) {
+    multi_display_draw_vertical_line(y, y + h, i, color);
+  }
+}
+
+void multi_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
+                                       color_t color, uint8_t size) {
+
+  // TODO
+  if ((x >= MULTI_DISPLAY_WIDTH) ||   // Clip right
+      (y >= MULTI_DISPLAY_HEIGHT) ||  // Clip bottom
+      ((x + 6 * size - 1) < 0) ||     // Clip left
+      ((y + 8 * size - 1) < 0)) {      // Clip top
+    return;
+  }
+
+  for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
+    uint8_t line = pgm_read_byte(&standard_ascii_font[c * 5 + i]);
+    for (int8_t j = 0; j < 8; j++, line >>= 1) {
+      if (line & 1) {
+        if (size == 1)
+          multi_display_draw_pixel(x + i, y + j, color);
+        else
+          multi_display_draw_fill_rect(x + i * size, y + j * size, size, size, color);
+      }
+    }
+  }
+      
+}
+
 void multi_display_configure_graph_axes(int16_t x_axis_min, int16_t x_axis_max,
                                         int16_t y_axis_min, int16_t y_axis_max) {
 
@@ -389,7 +420,7 @@ void multi_display_draw_graph_axes(void) {
   }
 }
 
-void multi_display_draw_graph_data(float *x_values, float *y_values, uint8_t N, color_t color) {
+void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N, color_t color) {
   // Precompute scaling factors outside the loop
   float x_scale = (MULTI_DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) / graph_config.x_axis_span;
   float y_scale = (MULTI_DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) / graph_config.y_axis_span;

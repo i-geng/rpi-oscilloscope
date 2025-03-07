@@ -149,6 +149,11 @@ void multi_display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x,
 void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
                                   color_t color);
 
+void multi_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
+                                       color_t color, uint8_t size);
+
+void multi_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color);
+
 void multi_display_configure_graph_axes(int16_t x_axis_min, int16_t x_axis_max,
                                         int16_t y_axis_min, int16_t y_axis_max);
 
@@ -161,6 +166,6 @@ void multi_display_update_graph_configuration(void);
 
 void multi_display_draw_graph_axes(void);
 
-void multi_display_draw_graph_data(float *x_values, float *y_values, uint8_t N, color_t color);
+void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N, color_t color);
 
 #endif
