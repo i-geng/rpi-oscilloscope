@@ -22,6 +22,12 @@ void multi_display_init(void) {
   multi_display_show();
 }
 
+void stats_display_init(void) {
+  single_display_init(stats_display_config);
+  stats_display_clear();
+  stats_display_show();
+}
+
 // Helper function to send a byte over I2C to a particular function
 void multi_display_send_command(uint8_t cmd,
                                 display_configuration_t display_config) {
@@ -132,14 +138,33 @@ void multi_display_show(void) {
   }
 }
 
+void stats_display_show(void) {
+  // Send the stats display buffer to the correct screen
+  uint8_t stats_buffer[1 + DISPLAY_BUFFER_SIZE];
+  stats_buffer[0] = 0x40;
+  memcpy(&stats_buffer[1], stats_display_buffer, DISPLAY_BUFFER_SIZE);
+  stats_display_config.i2c_write_func(stats_display_config.device_address,
+                                      stats_buffer,
+                                      1 + DISPLAY_BUFFER_SIZE);
+}
+
 // Clears the screen to black; no change until display_show() is called
 void multi_display_clear(void) {
   memset(multi_display_buffer, 0, sizeof(multi_display_buffer));
 }
 
+// Clears the screen to black; no change until display_show() is called
+void stats_display_clear(void) {
+  memset(stats_display_buffer, 0, sizeof(stats_display_buffer));
+}
+
 // Fills the display completely with white
 void multi_display_fill_white(void) {
   memset(multi_display_buffer, 255, sizeof(multi_display_buffer));
+}
+
+void stats_display_fill_white(void) {
+  memset(stats_display_buffer, 255, sizeof(stats_display_buffer));
 }
 
 // Draw a pixel at coordinates (x, y) with specified color

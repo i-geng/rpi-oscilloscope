@@ -16,7 +16,7 @@ extern const unsigned char standard_ascii_font[];
 
 enum {
   // Specify the number of displays
-  NUM_DISPLAYS = 1,
+  NUM_DISPLAYS = 0,
 
   // Statistics for a single SSD1306 display
   DISPLAY_WIDTH = 128,
@@ -32,6 +32,9 @@ enum {
 // Multi-display pixel buffer
 static uint8_t multi_display_buffer[MULTI_DISPLAY_BUFFER_SIZE];
 
+// Stats display pixel buffer
+static uint8_t stats_display_buffer[DISPLAY_BUFFER_SIZE];
+
 // Struct that describes a single display
 typedef struct {
   // I2C address of display
@@ -41,12 +44,15 @@ typedef struct {
   int (*i2c_write_func)(unsigned, uint8_t *, unsigned);
 } display_configuration_t;
 
-// Create a display_t struct for each display
+// Create a display_configuration_t struct for each display
 static display_configuration_t display_config_arr[NUM_DISPLAYS] = {
-    {0x3C, i2c_write},
+    // {0x3C, i2c_write},
     // {0x3C, i2c_write},
     // {0x3C, i2c_write},
 };
+
+// Create a display_configuration_t struct for the stats display
+static display_configuration_t stats_display_config = {0x3C, i2c_write};
 
 // Struct that describes graph configuration
 typedef struct {
@@ -113,12 +119,16 @@ typedef enum {
 // beforehand
 void multi_display_init(void);
 
+void stats_display_init(void);
+
 // Initialize a single SSD1306 display
 void single_display_init(display_configuration_t display_config);
 
 // Send display buffer to screen via I2C
 // Must be called to actually update the display!
 void multi_display_show(void);
+
+void stats_display_show(void);
 
 // Helper function to send a byte over I2C
 void multi_display_send_command(uint8_t cmd,
@@ -127,8 +137,12 @@ void multi_display_send_command(uint8_t cmd,
 // Clears the screen to black; no change until display_show() is called
 void multi_display_clear(void);
 
+void stats_display_clear(void);
+
 // Fills the display completely with white
 void multi_display_fill_white(void);
+
+void stats_display_fill_white(void);
 
 // Draw a pixel at coordinates (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
