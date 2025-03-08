@@ -1,3 +1,8 @@
+
+/*
+This test displays the raw input from ADC to two displays side by side.
+It prints teh ADC value * 1000 to the displays
+*/
 #include "rpi.h"
 // #include "display.h"
 #include "i2c.h"

@@ -3,8 +3,8 @@ BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 # PROGS := 0-multimeter.c
 # PROGS := 1-multimeter-buffer.c
 # PROGS := 2-oscilloscope.c
-# PROGS := 2-oscilloscope-cloud.c
-PROGS := 2-oscilloscope-main.c
+PROGS := 2-oscilloscope-cloud.c
+# PROGS := 2-oscilloscope-main.c
 
 INCLUDE +=
 # COMMON_SRC += $(CS140E_FINAL_PROJ_PATH)/src/display_ig/display.c
@@ -26,8 +26,8 @@ LIB_POST += $(CS140E_2025_PATH)/lib/libgcc.a
 
 
 # define this if you need to give the device for your pi
-TTYUSB = /dev/ttyUSB1
-# TTYUSB = /dev/ttyUSB0
+# TTYUSB = /dev/ttyUSB1
+TTYUSB = /dev/ttyUSB0
 
 
 
