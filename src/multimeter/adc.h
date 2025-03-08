@@ -19,6 +19,7 @@ typedef struct {
   int interrupt_pin;
   int pga_gain;
   float pga_val;
+  uint32_t config;
 } ADC_STRUCT;
 
 typedef enum {
@@ -30,9 +31,18 @@ typedef enum {
   PGA_0256 = 0b111
 } ADC_GAIN;
 
+typedef enum {
+  AIN0 = 0b100,
+  AIN1 = 0b101,
+  AIN2 = 0b110,
+  AIN3 = 0b111
+} ADC_CHANNEL;
+
+// swap input channel
+void adc_change_channel(ADC_STRUCT* adc, ADC_CHANNEL new_channel);
 
 // Initialize adc
-ADC_STRUCT* adc_init(uint8_t addr, int interrupt_pin, ADC_GAIN gain);
+ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain, ADC_CHANNEL channel);
 
 // Read from adc
 float adc_read(ADC_STRUCT* adc);

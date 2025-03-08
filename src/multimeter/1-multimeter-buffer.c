@@ -4,6 +4,8 @@
 #include "multi-display.h"
 #include "signal_processing.h"
 
+// #define DCOFFSETDEFINEDABOVE 1
+
 void convert_data_to_ascii(int data) {
   char buffer[10];
   snprintk(buffer, sizeof(buffer), "%d  ", data);
@@ -25,7 +27,7 @@ void notmain(void) {
 
 
   // uint16_t samples = 50;
-  uint16_t base_samples = 200;
+  uint16_t base_samples = 100;
   // uint16_t upsamples = 1000;
 
   i2c_init();
@@ -34,12 +36,7 @@ void notmain(void) {
   multi_display_init();
   printk("Display initialized. \n");
 
-  ADC_STRUCT* adc = adc_init(0x48, 17, PGA_6144);
-
-  ADC_STRUCT* adc2 = adc_init(0x49, 17, PGA_6144);
-
-
-
+  ADC_STRUCT* adc = adc_init(17, PGA_6144, AIN2);
 
   for (int i = 0; i < 5000000; i ++){
     // float *data_array = kmalloc(sizeof(*data_array) * samples);
@@ -50,23 +47,46 @@ void notmain(void) {
 
 
     while(gpio_read(17) == 0);
-    int horizontal_scaling = (int) (adc_read(adc2) * 10);
+    // printk("here1");
+    adc_change_channel(adc, AIN3);
+
+    // Wait approx two periods to be safe
+    delay_ms(3);
+
+    int horizontal_scaling = (int) (adc_read(adc) * 5);
+
+    adc_change_channel(adc, AIN2);
+    delay_ms(3);
+
+    int vertical_scaling = (int) (adc_read(adc));
+
+    adc_change_channel(adc, AIN1);
+    delay_ms(3);
+
+
+    float offset = adc_read(adc);
+
+    adc_change_channel(adc, AIN0);
+    delay_ms(3);
+
+
     uint16_t samples = base_samples/2 * (horizontal_scaling + 1);
-    multi_display_configure_graph_axes(0, samples, 0, 3.3);
+    multi_display_configure_graph_axes(-0.25, samples, -0.25, vertical_scaling);
+    
 
     float *data_array = kmalloc(sizeof(*data_array) * samples);
-
+    // printk("Reading %d samples\n", samples);
     float data;
     float graph_index[samples];
     for (int i = 0; i < samples; i ++){
       graph_index[i] = i;
     }
 
-
     // printk("%d \n", horizontal_scaling);
 
     for (int j = 0; j < samples; j ++){
-      data = adc_read(adc);
+      data = adc_read(adc) + offset;
+      // printk("Read %f \n", data);
       data_array[j] = data > 0 ? data : 0;
     }
 
@@ -82,6 +102,7 @@ void notmain(void) {
     // printk("\n");
 
     multi_display_clear();
+    multi_display_draw_graph_axes();
     multi_display_draw_graph_data(graph_index, data_array, (uint16_t)samples, COLOR_WHITE);
     multi_display_show();
   }
