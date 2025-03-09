@@ -98,19 +98,41 @@ int vsnprintk(char *buf, unsigned n, const char *fmt, va_list ap) {
                 }
                 emit_val(10, v);
                 break;
-            case 'f': { // floating-point number
+            case 'f': {  // Handle floating-point
                 f = va_arg(ap, double);
                 if (f < 0) {
                     putchar('-');
                     f = -f;
                 }
-                int int_part = (int)f;  // Get integer part
+
+                int int_part = (int)f;  // Extract integer part
                 emit_val(10, int_part);
-                putchar('.');  // Decimal point
+                putchar('.');  // Print decimal point
 
                 f -= int_part;  // Get fractional part
-                f *= 10000;  // Scale to 4 decimal places
-                emit_val(10, (int)f);  // Print fractional part
+                f *= 10000;  // Scale for 4 decimal places
+                int frac_part = (int)(f + 0.5);  // Round properly
+
+                // Manually handle leading zeros for fractional part
+                int temp = frac_part;
+                int num_digits = 0;
+                if (temp == 0) {
+                    putchar('0');  // Special case: fraction is exactly 0
+                    num_digits = 1;
+                } else {
+                    while (temp > 0) {
+                        temp /= 10;
+                        num_digits++;
+                    }
+                }
+
+                // Print leading zeros if needed (since we expect 4 digits)
+                for (int i = num_digits; i < 4; i++) {
+                    putchar('0');
+                }
+
+                // Print the actual fraction value
+                emit_val(10, frac_part);
                 break;
             }
             // string
