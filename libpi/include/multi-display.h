@@ -2,7 +2,7 @@
 #define __RPI_MULTI_DISPLAY_H__
 
 #include "rpi.h"  // Make sure "rpi.h" is the first include!
-#include "i2c.h"
+#include "multi-i2c.h"
 
 // Multi-display library to draw to multiple SSD1306
 // displays that are placed horizontally next to each other.
@@ -46,13 +46,12 @@ typedef struct {
 
 // Create a display_configuration_t struct for each display
 static display_configuration_t display_config_arr[NUM_DISPLAYS] = {
-    // {0x3C, i2c_write},
-    // {0x3C, i2c_write},
-    // {0x3C, i2c_write},
+    // {0x3C, i2c_write_BSC1},
+    // {0x3D, i2c_write_BSC1},
 };
 
 // Create a display_configuration_t struct for the stats display
-static display_configuration_t stats_display_config = {0x3C, i2c_write};
+static display_configuration_t stats_display_config = {0x3C, i2c_write_BSC0};
 
 // Struct that describes graph configuration
 typedef struct {

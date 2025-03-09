@@ -31,6 +31,10 @@ STAFF_OBJS  +=  ./staff-objs/gpio-int.o
 SRC += src/i2c.c
 ##################################
 
+########## MULTI-I2C ##############
+SRC += src/multi-i2c.c
+##################################
+
 ######### MULTI-DISPLAY ##########
 SRC += src/multi-display.c
 SRC += src/standard-ascii-font.c
