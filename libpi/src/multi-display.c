@@ -1,6 +1,5 @@
 #include "rpi.h"  // Make sure "rpi.h" is the first include!
 #include "multi-display.h"
-#include "i2c.h"
 
 // This library is based on the ADAfruit SSD1306 library:
 // https://github.com/adafruit/Adafruit_SSD1306
@@ -20,6 +19,12 @@ void multi_display_init(void) {
   // Clear the multi-display to black
   multi_display_clear();
   multi_display_show();
+}
+
+void stats_display_init(void) {
+  single_display_init(stats_display_config);
+  stats_display_clear();
+  stats_display_show();
 }
 
 // Helper function to send a byte over I2C to a particular function
@@ -132,14 +137,33 @@ void multi_display_show(void) {
   }
 }
 
+void stats_display_show(void) {
+  // Send the stats display buffer to the correct screen
+  uint8_t stats_buffer[1 + DISPLAY_BUFFER_SIZE];
+  stats_buffer[0] = 0x40;
+  memcpy(&stats_buffer[1], stats_display_buffer, DISPLAY_BUFFER_SIZE);
+  stats_display_config.i2c_write_func(stats_display_config.device_address,
+                                      stats_buffer,
+                                      1 + DISPLAY_BUFFER_SIZE);
+}
+
 // Clears the screen to black; no change until display_show() is called
 void multi_display_clear(void) {
   memset(multi_display_buffer, 0, sizeof(multi_display_buffer));
 }
 
+// Clears the screen to black; no change until display_show() is called
+void stats_display_clear(void) {
+  memset(stats_display_buffer, 0, sizeof(stats_display_buffer));
+}
+
 // Fills the display completely with white
 void multi_display_fill_white(void) {
   memset(multi_display_buffer, 255, sizeof(multi_display_buffer));
+}
+
+void stats_display_fill_white(void) {
+  memset(stats_display_buffer, 255, sizeof(stats_display_buffer));
 }
 
 // Draw a pixel at coordinates (x, y) with specified color
@@ -155,6 +179,21 @@ void multi_display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
     break;
   case COLOR_INVERT:
     multi_display_buffer[(y / 8) * MULTI_DISPLAY_WIDTH + x] ^= (1 << (y & 7));
+    break;
+  }
+}
+
+void stats_display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
+  x = DISPLAY_WIDTH - x - 1;
+  switch (color) {
+  case COLOR_WHITE:
+    stats_display_buffer[(y / 8) * DISPLAY_WIDTH + x] |= (1 << (y & 7));
+    break;
+  case COLOR_BLACK:
+   stats_display_buffer[(y / 8) * DISPLAY_WIDTH + x] &= ~(1 << (y & 7));
+    break;
+  case COLOR_INVERT:
+    stats_display_buffer[(y / 8) * DISPLAY_WIDTH + x] ^= (1 << (y & 7));
     break;
   }
 }
@@ -297,6 +336,96 @@ void multi_display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x,
   }
 }
 
+void stats_display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x,
+                                      color_t color) {
+
+  // Verify y_start is less than y_end
+  if (y_start >= y_end) return;
+
+  // Verify that x is valid
+  if (x < 0 || x >= DISPLAY_WIDTH) return;
+
+  // Clamp y_start to 0 and y_end to (MULTI_DISPLAY_HEIGHT - 1)
+  y_start = y_start < 0 ? 0 : y_start;
+  y_end = y_end > DISPLAY_HEIGHT - 1 ? DISPLAY_HEIGHT - 1 : y_end;
+
+  // Transformation to make sure top left corner of screen is pixel (0, 0)
+  x = DISPLAY_WIDTH - x - 1;
+
+  // This display doesn't need ints for coordinates,
+  // use local byte registers for faster juggling
+  uint8_t y = y_start, h = y_end - y_start;
+  uint8_t *p_buf = &stats_display_buffer[(y / 8) * DISPLAY_WIDTH + x];
+
+  // Do the first partial byte, if necessary - this requires some masking
+  uint8_t mod = (y & 7);
+  if (mod) {
+    // Mask off the high n bits we want to set
+    mod = 8 - mod;
+    uint8_t mask = ~(0xFF >> mod);
+
+    // Adjust the mask if we're not going to reach the end of this byte
+    if (h < mod) {
+      mask &= (0XFF >> (mod - h));
+    }
+
+    switch (color) {
+    case COLOR_WHITE:
+      *p_buf |= mask;
+      break;
+    case COLOR_BLACK:
+      *p_buf &= ~mask;
+      break;
+    case COLOR_INVERT:
+      *p_buf ^= mask;
+      break;
+    }
+    p_buf += DISPLAY_WIDTH;
+  }
+
+  if (h >= mod) { // More to go?
+    h -= mod;
+    // Write solid bytes while we can - effectively 8 rows at a time
+    if (h >= 8) {
+      if (color == COLOR_INVERT) {
+        // Separate copy of the code so we don't impact performance of
+        // black/white write version with an extra comparison per loop
+        do {
+          *p_buf ^= 0xFF;               // Invert byte
+          p_buf += DISPLAY_WIDTH;       // Advance pointer 8 rows
+          h -= 8;                       // Subtract 8 rows from height
+        } while (h >= 8);
+      } else {
+        // store a local value to work with
+        uint8_t val = (color != COLOR_BLACK) ? 255 : 0;
+        do {
+          *p_buf = val;                 // Set byte
+          p_buf += DISPLAY_WIDTH; // Advance pointer 8 rows
+          h -= 8;                       // Subtract 8 rows from height
+        } while (h >= 8);
+      }
+    }
+
+    if (h) { // Do the final partial byte, if necessary
+      mod = h & 7;
+      // This time we want to mask the low bits of the byte,
+      // vs the high bits we did above
+      uint8_t mask = (1 << mod) - 1;
+      switch (color) {
+      case COLOR_WHITE:
+        *p_buf |= mask;
+        break;
+      case COLOR_BLACK:
+        *p_buf &= ~mask;
+        break;
+      case COLOR_INVERT:
+        *p_buf ^= mask;
+        break;
+      }
+    }
+  }
+}
+
 // Draw an ASCII character at (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
 void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
@@ -317,10 +446,29 @@ void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
   }
 }
 
+// Draw an ASCII character at (x, y) with specified color
+// Convention: top left corner of screen is pixel (0, 0)
+void stats_display_draw_character(int16_t x, int16_t y, unsigned char c,
+                                  color_t color) {
+  if ((x >= DISPLAY_WIDTH) ||  // Clip right
+      (y >= DISPLAY_HEIGHT) || // Clip bottom
+      ((x + 6 - 1) < 0) ||     // Clip left
+      ((y + 8 - 1) < 0))       // Clip top
+    return;
+
+  for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
+    uint8_t line = pgm_read_byte(&standard_ascii_font[c * 5 + i]);
+    for (int8_t j = 0; j < 8; j++, line >>= 1) {
+      if (line & 1) {
+        stats_display_draw_pixel(x + i, y + j, color);
+      }
+    }
+  }
+}
+
 void multi_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
                                        color_t color, uint8_t size_x, uint8_t size_y) {
 
-  // TODO
   if ((x >= MULTI_DISPLAY_WIDTH) ||   // Clip right
       (y >= MULTI_DISPLAY_HEIGHT) ||  // Clip bottom
       ((x + 6 * size_x - 1) < 0) ||     // Clip left
@@ -341,9 +489,39 @@ void multi_display_draw_character_size(int16_t x, int16_t y, unsigned char c,
   }
 }
 
+void stats_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
+                                       color_t color, uint8_t size_x, uint8_t size_y) {
+
+  if ((x >= DISPLAY_WIDTH) ||       // Clip right
+      (y >= DISPLAY_HEIGHT) ||      // Clip bottom
+      ((x + 6 * size_x - 1) < 0) || // Clip left
+      ((y + 8 * size_y - 1) < 0)) { // Clip top
+    return;
+  }
+
+  for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
+    uint8_t line = pgm_read_byte(&standard_ascii_font[c * 5 + i]);
+    for (int8_t j = 0; j < 8; j++, line >>= 1) {
+      if (line & 1) {
+        if (size_x == 1 && size_y == 1)
+          stats_display_draw_pixel(x + i, y + j, color);
+        else
+          stats_display_draw_fill_rect(x + i * size_x, y + j * size_y, size_x, size_y, color);
+      }
+    }
+  }
+}
+
+
 void multi_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color) {
   for (int16_t i = x; i < x + w; i++) {
     multi_display_draw_vertical_line(y, y + h, i, color);
+  }
+}
+
+void stats_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color) {
+  for (int16_t i = x; i < x + w; i++) {
+    stats_display_draw_vertical_line(y, y + h, i, color);
   }
 }
 
@@ -436,5 +614,33 @@ void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N,
     float y = -y_values[i] * y_scale + y_offset;
 
     multi_display_draw_pixel(x, y, color);
+  }
+}
+
+void stats_display_draw_data(float amplitude, float frequency) {
+  stats_display_draw_character_size(5, 15, 'A', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(20, 15, '=', COLOR_WHITE, 2, 2);
+  char a_buffer[12];
+  snprintk(a_buffer, sizeof(a_buffer), "%f", amplitude);
+  for (size_t i = 0; i < strlen(a_buffer); i++) {
+    stats_display_draw_character_size(35 + 11 * i,
+                                      15,
+                                      a_buffer[i], 
+                                      COLOR_WHITE,
+                                      2,
+                                      2);
+  }
+  
+  stats_display_draw_character_size(5, 35, 'f', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(20, 35, '=', COLOR_WHITE, 2, 2);
+  char f_buffer[12];
+  snprintk(f_buffer, sizeof(f_buffer), "%f", frequency);
+  for (size_t i = 0; i < strlen(f_buffer); i++) {
+    stats_display_draw_character_size(35 + 11 * i,
+                                      35,
+                                      f_buffer[i], 
+                                      COLOR_WHITE,
+                                      2,
+                                      2);
   }
 }
