@@ -147,6 +147,7 @@ void stats_display_fill_white(void);
 // Draw a pixel at coordinates (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
 void multi_display_draw_pixel(uint16_t x, uint16_t y, color_t color);
+void stats_display_draw_pixel(uint16_t x, uint16_t y, color_t color);
 
 // Draw a horizontal line from (x_start, y) to (x_end, y), inclusive of both
 // endpoins Convention: top left corner of screen is pixel (0, 0)
@@ -157,16 +158,23 @@ void multi_display_draw_horizontal_line(int16_t x_start, int16_t x_end,
 // endpoints Convention: top left corner of screen is pixel (0, 0)
 void multi_display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x,
                                       color_t color);
+void stats_display_draw_vertical_line(int16_t y_start, int16_t y_end, int16_t x,
+                                      color_t color);
 
 // Draw an ASCII character at (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
 void multi_display_draw_character(int16_t x, int16_t y, unsigned char c,
                                   color_t color);
+void stats_display_draw_character(int16_t x, int16_t y, unsigned char c,
+                                  color_t color);
 
 void multi_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
                                        color_t color, uint8_t size_x, uint8_t size_y);
+void stats_display_draw_character_size(int16_t x, int16_t y, unsigned char c, 
+                                       color_t color, uint8_t size_x, uint8_t size_y);
 
 void multi_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color);
+void stats_display_draw_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, color_t color);
 
 void multi_display_configure_graph_axes(int16_t x_axis_min, int16_t x_axis_max,
                                         int16_t y_axis_min, int16_t y_axis_max);
@@ -181,5 +189,7 @@ void multi_display_update_graph_configuration(void);
 void multi_display_draw_graph_axes(void);
 
 void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N, color_t color);
+
+void stats_display_draw_data(float amplitude, float frequency);
 
 #endif

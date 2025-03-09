@@ -53,6 +53,7 @@ int vsnprintk(char *buf, unsigned n, const char *fmt, va_list ap) {
             uint32_t u;
             int v;
             char *s;
+            double f;
 
             switch(*fmt) {
             case 'b': emit_val(2, va_arg(ap, uint32_t)); break;
@@ -97,6 +98,21 @@ int vsnprintk(char *buf, unsigned n, const char *fmt, va_list ap) {
                 }
                 emit_val(10, v);
                 break;
+            case 'f': { // floating-point number
+                f = va_arg(ap, double);
+                if (f < 0) {
+                    putchar('-');
+                    f = -f;
+                }
+                int int_part = (int)f;  // Get integer part
+                emit_val(10, int_part);
+                putchar('.');  // Decimal point
+
+                f -= int_part;  // Get fractional part
+                f *= 10000;  // Scale to 4 decimal places
+                emit_val(10, (int)f);  // Print fractional part
+                break;
+            }
             // string
             case 's':
                 for(s = va_arg(ap, char *); *s; s++) 
