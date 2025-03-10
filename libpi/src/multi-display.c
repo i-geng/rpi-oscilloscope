@@ -600,6 +600,41 @@ void multi_display_draw_graph_axes(void) {
   }
 }
 
+void multi_display_draw_graph_tick(uint32_t label) {
+  // Draw horizontal tick for the graph x-axis
+  multi_display_draw_horizontal_line(
+      graph_config.margin_left - 3, graph_config.margin_left + 3,
+      graph_config.y_horizontal, COLOR_WHITE);
+
+  // Draw vertical line for the graph y-axis
+  multi_display_draw_vertical_line(graph_config.margin_top,
+                                   MULTI_DISPLAY_HEIGHT -
+                                       graph_config.margin_bottom,
+                                   graph_config.x_vertical, COLOR_WHITE);
+
+  // Draw label for x-axis maximum
+  char x_buffer[12];
+  snprintk(x_buffer, sizeof(x_buffer), "%d", label);
+
+  for (size_t i = 1; i <= strlen(x_buffer); i++) {
+    multi_display_draw_character(MULTI_DISPLAY_WIDTH -
+                                     graph_config.margin_right - 5 * i,
+                                 graph_config.y_horizontal + 1,
+                                 x_buffer[strlen(x_buffer) - i], COLOR_WHITE);
+  }
+
+  // Draw label for y-axis maximum
+  char y_buffer[12];
+  snprintk(y_buffer, sizeof(y_buffer), "%d", graph_config.y_axis_max);
+
+  for (size_t i = 1; i <= strlen(y_buffer); i++) {
+    multi_display_draw_character(graph_config.x_vertical - 5 * i,
+                                 graph_config.margin_top,
+                                 y_buffer[strlen(y_buffer) - i], COLOR_WHITE);
+  }
+}
+
+
 void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N, color_t color) {
   // Precompute scaling factors outside the loop
   float x_scale = (MULTI_DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) / graph_config.x_axis_span;

@@ -16,7 +16,7 @@ extern const unsigned char standard_ascii_font[];
 
 enum {
   // Specify the number of displays
-  NUM_DISPLAYS = 0,
+  NUM_DISPLAYS = 1,
 
   // Statistics for a single SSD1306 display
   DISPLAY_WIDTH = 128,
@@ -46,7 +46,7 @@ typedef struct {
 
 // Create a display_configuration_t struct for each display
 static display_configuration_t display_config_arr[NUM_DISPLAYS] = {
-    // {0x3C, i2c_write_BSC1},
+    {0x3C, i2c_write_BSC1},
     // {0x3D, i2c_write_BSC1},
 };
 
@@ -186,6 +186,7 @@ void multi_display_configure_graph_margins(uint8_t margin_left,
 void multi_display_update_graph_configuration(void);
 
 void multi_display_draw_graph_axes(void);
+void multi_display_draw_graph_tick(uint32_t label);
 
 void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N, color_t color);
 
