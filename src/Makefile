@@ -5,3 +5,4 @@ clean:
 	make clean -C adc
 	make clean -C multimeter
 	make clean -C display_ig
+	make clean -C oscilloscope
