@@ -16,7 +16,7 @@ extern const unsigned char standard_ascii_font[];
 
 enum {
   // Specify the number of displays
-  NUM_DISPLAYS = 2,
+  NUM_DISPLAYS = 1,
 
   // Statistics for a single SSD1306 display
   DISPLAY_WIDTH = 128,
@@ -44,7 +44,7 @@ typedef struct {
 // Create a display_t struct for each display
 static display_configuration_t display_config_arr[NUM_DISPLAYS] = {
     {0x3C, i2c_write},
-    {0x3D, i2c_write},
+    // {0x3D, i2c_write},
     // {0x3C, i2c_write},
 };
 
