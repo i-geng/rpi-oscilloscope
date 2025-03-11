@@ -9,6 +9,20 @@
 static uint8_t buffer[1 + DISPLAY_BUFFER_SIZE];
 static uint8_t *display_buffer = buffer + 1;
 
+static display_graph_configuration_t graph_config = {
+  // Initialize graph configuration with default values
+  .margin_left = 10,
+  .margin_right = 5,
+  .margin_bottom = 10,
+  .margin_top = 5,
+
+  .x_axis_min = 0,
+  .x_axis_max = 10,
+
+  .y_axis_min = 0,
+  .y_axis_max = 10,
+};
+
 #ifndef pgm_read_byte
 #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 #endif
@@ -131,8 +145,6 @@ void display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
     break;
   }
 }
-
-void display_draw_axes(void) {}
 
 // Draw a horizontal line from (x_start, y) to (x_end, y), inclusive of both
 // endpoins Convention: top left corner of screen is pixel (0, 0)
@@ -409,22 +421,64 @@ void display_draw_character(int16_t x, int16_t y, unsigned char c,
   }
 }
 
-void display_draw_graph_axes(void) {
-  // TODO: graph margins
+void display_configure_graph_axes(int16_t x_min, int16_t x_max, int16_t y_min, int16_t y_max) {
+  // Graph config
+  graph_config.x_axis_span = graph_config.x_axis_max - graph_config.x_axis_min;
+  graph_config.y_axis_span = graph_config.y_axis_max - graph_config.y_axis_min;
 
+  graph_config.y_horizontal = graph_config.y_axis_max / graph_config.y_axis_span * (DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) + graph_config.margin_top;
+  graph_config.x_vertical = -graph_config.x_axis_min / graph_config.x_axis_span * (DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) + graph_config.margin_left;
+
+}
+
+void display_draw_graph_axes(void) {
   // Draw horizontal line for the graph x-axis
-  float graph_y_axis_range = graph_y_axis_max - graph_y_axis_min;
-  int16_t y_horizontal = graph_y_axis_max / graph_y_axis_range * DISPLAY_HEIGHT;
-  display_draw_horizontal_line(0, DISPLAY_WIDTH, y_horizontal, COLOR_WHITE);
+  display_draw_horizontal_line(graph_config.margin_left, DISPLAY_WIDTH - graph_config.margin_right, graph_config.y_horizontal, COLOR_WHITE);
 
   // Draw vertical line for the graph y-axis
-  float graph_x_axis_range = graph_x_axis_max - graph_x_axis_min;
-  int16_t x_vertical = -graph_x_axis_min / graph_x_axis_range * DISPLAY_WIDTH;
-  display_draw_vertical_line(0, DISPLAY_HEIGHT, x_vertical, COLOR_WHITE);
+  display_draw_vertical_line(graph_config.margin_top, DISPLAY_HEIGHT - graph_config.margin_bottom, graph_config.x_vertical, COLOR_WHITE);
 
   // Draw label for x-axis maximum
-  display_draw_character(DISPLAY_WIDTH - 5, y_horizontal, 'x', COLOR_WHITE);
+  char x_buffer[6];
+  snprintk(x_buffer, sizeof(x_buffer), "%d", graph_config.x_axis_max);
+
+  for (size_t i = 1; i <= strlen(x_buffer); i++) {
+    display_draw_character(DISPLAY_WIDTH - graph_config.margin_right - 5 * i,
+      graph_config.y_horizontal + 1,
+      x_buffer[strlen(x_buffer) - i],
+      COLOR_WHITE);
+  }
 
   // Draw label for y-axis maximum
-  display_draw_character(x_vertical - 5, 0 + 2, 'y', COLOR_WHITE);
+  char y_buffer[6];
+  snprintk(y_buffer, sizeof(y_buffer), "%d", graph_config.y_axis_max);
+
+  for (size_t i = 1; i <= strlen(y_buffer); i++) {
+    display_draw_character(graph_config.x_vertical - 5 * i,
+      graph_config.margin_top,
+      y_buffer[strlen(y_buffer) - i],
+      COLOR_WHITE);
+  }
+}
+
+void display_draw_graph_data(void) {
+  float x_values[10] = {0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.8};
+  float y_values[10] = {4.997, 1.617, 1.617, 1.617, 0.016, 0.016, 1.085, 1.085, 4.223, 4.223};
+
+  // float graph_x_axis_range = graph_x_axis_max - graph_x_axis_min;
+  // int16_t x_vertical = -graph_x_axis_min / graph_x_axis_range * (DISPLAY_WIDTH - graph_margin_left - graph_margin_right) + graph_margin_left;
+  // float graph_y_axis_range = graph_y_axis_max - graph_y_axis_min;
+  // int16_t y_horizontal = graph_y_axis_max / graph_y_axis_range * (DISPLAY_HEIGHT - graph_margin_top - graph_margin_bottom) + graph_margin_top;
+
+  for (size_t i = 0; i < 10; i++) {
+    // Graph a single point
+    float x = x_values[i];
+    float y = y_values[i];
+
+    x = (x - graph_config.x_axis_min) / graph_config.x_axis_span * (DISPLAY_WIDTH - graph_config.margin_left - graph_config.margin_right) + graph_config.margin_left;
+    y = (graph_config.y_axis_max - y) / graph_config.y_axis_span * (DISPLAY_HEIGHT - graph_config.margin_top - graph_config.margin_bottom) + graph_config.margin_top;
+
+    display_draw_pixel(x, y, COLOR_WHITE);
+  }
+
 }

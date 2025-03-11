@@ -30,6 +30,24 @@ void adc_point_to_reg(ADC_STRUCT* adc, int reg){
   assert(status);
 }
 
+void adc_change_channel(ADC_STRUCT* adc, ADC_CHANNEL new_channel){
+  
+  // Update config  
+  adc->config &= ~(0b111 << 12); // flush  14:12
+  adc->config |= (new_channel << 12);
+
+
+  // Point to config reg
+  adc_point_to_reg(adc, CONFIG_REG);
+
+  // Write to config
+  adc_write_to_reg(adc, CONFIG_REG, adc->config);
+
+  // Point back to conversion register
+  adc_point_to_reg(adc, CONVERSION_REG);
+
+}
+
 uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
   uint8_t buf[2];
   
@@ -46,11 +64,11 @@ uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
 float adc_read(ADC_STRUCT* adc){
   uint16_t data = adc_read_reg(adc, CONVERSION_REG);
 
-  return (data / (32768.0)) * adc->pga_val;
+  return (((float) data) / (32768.0)) * adc->pga_val;
 }
 
 
-ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain){
+ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain, ADC_CHANNEL channel){
 
   kmalloc_init();
   ADC_STRUCT* adc = (ADC_STRUCT*) kmalloc(sizeof(ADC_STRUCT));
@@ -67,8 +85,8 @@ ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain){
 
   uint16_t config = 0;
   
-  config |= 0b1   << 14;  // Don't need to set this
-  config |= 0b100 << 12;  // Set pos input to AIN0, nev input to GND
+  config |= 0b0   << 15;  // Don't need to set this
+  config |= channel << 12;  // Set pos input to AIN0, nev input to GND
   config |= gain <<  9;  // TODO: Set PGA correctly
   config |= 0b0   <<  8;  // Set to continuous mode
   config |= 0b111 <<  5;  // 860 SPS data rate.
@@ -76,6 +94,10 @@ ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain){
   config |= 0b1   <<  3;  // Set Interrupt pin to active HI
   // don't care 2
   config |= 0b00  <<  0;  // Assert interrupt after 1 conversion
+
+
+  // write config
+  adc->config = config;
 
   // Configure device
   adc_write_to_reg(adc, CONFIG_REG, config);
