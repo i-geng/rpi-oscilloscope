@@ -86,15 +86,16 @@ void plot_signal(
     }
 }
 
-void fft(float data_re[], float data_im[], const unsigned int N) {
+int fft(float data_re[], float data_im[], const unsigned int N) {
     // N must be a power of 2 !!!
     if ((N & (N - 1)) != 0) {
         panic("N must be a power of 2 !!!\n");
-        return;
+        return -1;
     }
 
     rearrange(data_re, data_im, N);
-    compute(data_re, data_im, N);
+    int max_index = compute(data_re, data_im, N);
+    return max_index;
 }
 
 void rearrange(float data_re[], float data_im[], const unsigned int N) {
@@ -116,8 +117,10 @@ void rearrange(float data_re[], float data_im[], const unsigned int N) {
     }
 }
 
-void compute(float data_re[], float data_im[], const unsigned int N) {
-    const float pi = -PI; // Using PI constant already defined in math.h
+int compute(float data_re[], float data_im[], const unsigned int N) {
+    const float pi = -PI;
+    int max_index = 0;
+    float max_magnitude = 0;
     
     for(unsigned int step = 1; step < N; step <<= 1) {
         const unsigned int jump = step << 1;
@@ -134,6 +137,25 @@ void compute(float data_re[], float data_im[], const unsigned int N) {
                 data_im[match] = data_im[pair] - product_im;
                 data_re[pair] += product_re;
                 data_im[pair] += product_im;
+
+                // Check magnitude after final butterfly stage
+                if (step == N/2) {
+                    // Only check first half of frequencies
+                    if (pair < N/2) {
+                        float magnitude = data_re[pair] * data_re[pair] + data_im[pair] * data_im[pair];
+                        if (magnitude > max_magnitude) {
+                            max_magnitude = magnitude;
+                            max_index = pair;
+                        }
+                    }
+                    if (match < N/2) {
+                        float magnitude = data_re[match] * data_re[match] + data_im[match] * data_im[match];
+                        if (magnitude > max_magnitude) {
+                            max_magnitude = magnitude;
+                            max_index = match;
+                        }
+                    }
+                }
             }
             
             // Skip twiddle factor computation for last iteration of the group
@@ -146,6 +168,8 @@ void compute(float data_re[], float data_im[], const unsigned int N) {
             twiddle_im = sin(angle);
         }
     }
+    
+    return max_index;
 }
 
 float sqrt(float x) {

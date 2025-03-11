@@ -20,8 +20,8 @@ void plot_signal(
 );
 
 // FFT function declarations
-void fft(float data_re[], float data_im[], const unsigned int N);
+int fft(float data_re[], float data_im[], const unsigned int N);
 void rearrange(float data_re[], float data_im[], const unsigned int N);
-void compute(float data_re[], float data_im[], const unsigned int N);
+int compute(float data_re[], float data_im[], const unsigned int N);
 
 float sqrt(float x);
