@@ -40,6 +40,10 @@ SRC += src/multi-display.c
 SRC += src/standard-ascii-font.c
 ##################################
 
+######### FFT ##########
+SRC += src/math.c
+##################################
+
 # these are all the locations that get made into
 # libpi.a
 #
