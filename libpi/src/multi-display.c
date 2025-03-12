@@ -612,14 +612,18 @@ void multi_display_draw_graph_tick(uint32_t label) {
                                        graph_config.margin_bottom,
                                    graph_config.x_vertical, COLOR_WHITE);
 
-  // Draw label for x-axis maximum
+  // Draw label
   char x_buffer[12];
   snprintk(x_buffer, sizeof(x_buffer), "%d", label);
 
+  // Label units (ms)
+  multi_display_draw_character(MULTI_DISPLAY_WIDTH - graph_config.margin_right - 6, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom, 's', COLOR_WHITE);
+  multi_display_draw_character(MULTI_DISPLAY_WIDTH - graph_config.margin_right - 12, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom, 'm', COLOR_WHITE);
+
   for (size_t i = 1; i <= strlen(x_buffer); i++) {
     multi_display_draw_character(MULTI_DISPLAY_WIDTH -
-                                     graph_config.margin_right - 5 * i,
-                                 graph_config.y_horizontal + 1,
+                                     graph_config.margin_right - 6 * (i+2),
+                                 MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom,
                                  x_buffer[strlen(x_buffer) - i], COLOR_WHITE);
   }
 
@@ -627,11 +631,29 @@ void multi_display_draw_graph_tick(uint32_t label) {
   char y_buffer[12];
   snprintk(y_buffer, sizeof(y_buffer), "%d", graph_config.y_axis_max);
 
+  // Units (V)
+  multi_display_draw_character(graph_config.x_vertical - 6, graph_config.margin_top, 'V', COLOR_WHITE);
+
   for (size_t i = 1; i <= strlen(y_buffer); i++) {
-    multi_display_draw_character(graph_config.x_vertical - 5 * i,
+    multi_display_draw_character(graph_config.x_vertical - 6 * (i+1),
                                  graph_config.margin_top,
                                  y_buffer[strlen(y_buffer) - i], COLOR_WHITE);
   }
+
+  // Draw label for y-axis minimum
+  char y_min_buffer[12];
+  snprintk(y_min_buffer, sizeof(y_min_buffer), "%d", graph_config.y_axis_min);
+
+  // Units (V)
+  multi_display_draw_character(graph_config.x_vertical - 6, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom - 8, 'V', COLOR_WHITE);
+
+  for (size_t i = 1; i <= strlen(y_min_buffer); i++) {
+    multi_display_draw_character(graph_config.x_vertical - 6 * (i+1),
+                                 MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom - 8,
+                                 y_min_buffer[strlen(y_min_buffer) - i], COLOR_WHITE);
+  }
+
+
 }
 
 
