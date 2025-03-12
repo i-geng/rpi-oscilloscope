@@ -105,11 +105,14 @@ void notmain(void) {
     multi_display_clear();
     multi_display_draw_graph_axes();
     multi_display_draw_graph_data(graph_index, data_array, (uint16_t)samples, COLOR_WHITE);
-    multi_display_show();
-    // multi_display_separate_buffers();
-    // for (int index=0; index<DISPLAY_BUFFER_SIZE; index++){
-    //   multi_display_send_byte(index);
-    // }
+
+    // multi_display_show();
+
+    multi_display_separate_buffers();
+    for (int index=0; index<64; index++){
+      // adc_read(adc);
+      multi_display_send_sixteen_bytes(index);
+    }
     uint32_t end_time = timer_get_usec();
     printk("Time taken to send buffer: %d us\n", end_time - start_time);
   }
