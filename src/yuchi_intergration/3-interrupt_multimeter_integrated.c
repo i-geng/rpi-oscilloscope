@@ -3,6 +3,20 @@
 #include "i2c.h"
 #include "gpio.h"
 
+#include "multi-display.h"
+
+#define BSC0_BASE   0x20205000
+#define BSC1_BASE   0x20804000
+// #define BSC2_BASE   0x20805000
+
+#define BSC_BASE    BSC1_BASE
+#define BSC_C       (BSC_BASE + 0x0)   // Control register
+#define BSC_S       (BSC_BASE + 0x4)   // Status register
+#define BSC_DLEN    (BSC_BASE + 0x8)   // Data length register
+#define BSC_A       (BSC_BASE + 0xC)   // Address register
+#define BSC_FIFO    (BSC_BASE + 0x10)  // FIFO register
+#define BSC_DIV     (BSC_BASE + 0x14)  // Clock divider register
+
 //-------------------------------------------------------------------
 // 1) GLOBALS AND DEFINES
 //-------------------------------------------------------------------
@@ -78,10 +92,23 @@ ADC_STRUCT *adc = 0;
 
 // Enable rising-edge detect for pin. (No external function needed.)
 static inline void gpio_enable_rising_edge_detect(unsigned pin) {
+    dev_barrier();
 
     // RMW on GPREN0 (only have 32 pins)
     unsigned reg_val = GET32(GPIO_gpren0);
     reg_val |= (1 << pin);
+    PUT32(GPIO_gpren0, reg_val);
+
+    dev_barrier();
+}
+
+// Disable rising-edge detect for pin
+static inline void gpio_disable_rising_edge_detect(unsigned pin) {
+    dev_barrier();
+
+    // RMW on GPREN0 (only have 32 pins)
+    unsigned reg_val = GET32(GPIO_gpren0);
+    reg_val &= ~(1 << pin);
     PUT32(GPIO_gpren0, reg_val);
 
     dev_barrier();
@@ -137,13 +164,13 @@ static void interrupt_init(void) {
 // This is called from interrupts-asm.S if an IRQ occurs.
 void interrupt_vector(unsigned pc) {
     dev_barrier();
+    // printk("Interrupt vector called\n");
 
     // Check that the interrupt was caused by the gpio
     unsigned event_status = GET32(GPIO_gpeds0);
 
     // Only proceed if interrupt was caused by gpio pin
     if(event_status & (1 << interrupt_pin)) {
-
         // Clear the event detect so we don't loop forever
         gpio_clear_event_detect(interrupt_pin);
         // Call our ADC read logic
@@ -151,8 +178,20 @@ void interrupt_vector(unsigned pc) {
         
         uint32_t current_time = timer_get_usec();
 
+        // Read i2c status
+        uint8_t status = GET32(BSC_S);
+        if (status & (1 << 0)) {
+            // Disable the interrupt
+            gpio_disable_rising_edge_detect(interrupt_pin);
+            dev_barrier();
+            // printk("Interrupt disabled\n");
+            return;
+        }
+        
+        
         // Read ADC data
         adc_data[sample_count] = adc_read(adc);
+        // printk("ADC data: %f\n", adc_data[sample_count]);
         time_stamps[sample_count] = current_time;
 
         sample_count++;
@@ -178,6 +217,11 @@ int get_interval_usec(
 // 4) MAIN CODE
 //-------------------------------------------------------------------
 void notmain(void) {
+
+    // uint16_t base_samples = 100;
+
+
+    kmalloc_init();
     i2c_init();
 
     printk("Initializing interrupts...\n");
@@ -196,10 +240,12 @@ void notmain(void) {
     printk("Initializing ADC...\n");
     adc = adc_init(interrupt_pin, PGA_6144, AIN0);
 
+
+    // Init display
+    multi_display_init();
+
     // Reset sampling state
     sample_count = 0;
-    start_time   = timer_get_usec_raw();
-    last_time    = start_time;
 
     printk("Enabling global interrupts...\n");
     enable_interrupts();
@@ -213,6 +259,44 @@ void notmain(void) {
     while(get_interval_usec(start_time, timer_get_usec()) < 1000000 && sample_count < 1000) {
         // 1 second
         count++;
+
+        int horizontal_scaling = 5;
+        int vertical_scaling = 5;
+        float offset = 0;
+
+        // Draw graph
+        multi_display_clear();
+        if (count % 2 == 0) {
+            multi_display_draw_graph_axes();
+        }
+        // multi_display_draw_graph_data(adc_data, time_stamps, sample_count, COLOR_WHITE);
+        // printk("Sample count: %d\n", sample_count);
+
+        uint32_t num_bytes = 16;
+        multi_display_separate_buffers();
+
+        uint32_t start_time = timer_get_usec();
+        uint32_t old_sample_count = sample_count;
+        for (int i = 0; i < DISPLAY_BUFFER_SIZE; i+=num_bytes) {
+            while (sample_count == old_sample_count) {
+                delay_us(1);
+            }
+            gpio_disable_rising_edge_detect(interrupt_pin);
+            old_sample_count = sample_count;
+            multi_display_send_nbytes(i, num_bytes);
+            gpio_enable_rising_edge_detect(interrupt_pin);
+        }
+        uint32_t end_time = timer_get_usec();
+        printk("Time taken to update display: %d us\n", get_interval_usec(start_time, end_time)); 
+
+
+        
+        
+
+       
+        
+
+        delay_us(200000);
     }
 
     // while(sample_count < 1000) {
@@ -224,17 +308,18 @@ void notmain(void) {
     printk("Count: %d\n", count);
     disable_interrupts();
 
-    for(int i = 0; i<sample_count-1; i ++){
+    // for(int i = 0; i<sample_count-1; i ++){
+    for(int i = 0; i<100; i ++){
         printk("Index: %d, Interval: %d.%d ms, Data: %f \n", i, 
                 (int)((time_stamps[i+1] - time_stamps[i]) / 1000),
                 (int)((time_stamps[i+1] - time_stamps[i]) % 1000),
                 adc_data[i]);
     }
 
-    for(int i = 0; i<sample_count; i ++){
-        // print in csv format
-        printk("%d,%f\n", time_stamps[i], adc_data[i]);
-    }
+    // for(int i = 0; i<sample_count; i ++){
+    //     // print in csv format
+    //     printk("%d,%f\n", time_stamps[i], adc_data[i]);
+    // }
 
     
 

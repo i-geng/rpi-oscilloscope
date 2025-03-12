@@ -109,9 +109,10 @@ void notmain(void) {
     // multi_display_show();
 
     multi_display_separate_buffers();
-    for (int index=0; index<64; index++){
+    uint32_t num_bytes = 8;
+    for (int index=0; index<DISPLAY_BUFFER_SIZE; index+=num_bytes){
       // adc_read(adc);
-      multi_display_send_sixteen_bytes(index);
+      multi_display_send_nbytes(index, num_bytes);
     }
     uint32_t end_time = timer_get_usec();
     printk("Time taken to send buffer: %d us\n", end_time - start_time);
