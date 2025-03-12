@@ -16,7 +16,7 @@ extern const unsigned char standard_ascii_font[];
 
 enum {
   // Specify the number of displays
-  NUM_DISPLAYS = 1,
+  NUM_DISPLAYS = 2,
 
   // Statistics for a single SSD1306 display
   DISPLAY_WIDTH = 128,
