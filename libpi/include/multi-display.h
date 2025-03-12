@@ -45,9 +45,9 @@ typedef struct {
 } display_configuration_t;
 
 // Create a display_configuration_t struct for each display
-static display_configuration_t display_config_arr[NUM_DISPLAYS] = {
+static display_configuration_t display_config_arr[2] = {
     {0x3C, i2c_write_BSC1},
-    // {0x3D, i2c_write_BSC1},
+    {0x3D, i2c_write_BSC1},
 };
 
 // Create a display_configuration_t struct for the stats display
@@ -123,9 +123,7 @@ void stats_display_init(void);
 // Initialize a single SSD1306 display
 void single_display_init(display_configuration_t display_config);
 
-void multi_display_send_byte(uint32_t index);
-void multi_display_send_page(uint32_t index);
-void multi_display_send_sixteen_bytes(uint32_t index);
+void multi_display_send_nbytes(uint32_t index, uint32_t nbytes);
 void multi_display_separate_buffers(void);
 
 // Send display buffer to screen via I2C
