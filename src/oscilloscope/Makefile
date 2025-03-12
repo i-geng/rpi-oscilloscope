@@ -7,7 +7,9 @@ PROGS := tests/1-oscilloscope-main.c
 # INCLUDE +=
 COMMON_SRC += multi-display.c
 COMMON_SRC += ascii-font.c
-# COMMON_SRC += signal_processing.c
+COMMON_SRC += test-interrupts.c
+COMMON_SRC += interrupt-vec.c interrupt-asm.S 
+
 
 COMMON_SRC += $(CS140E_FINAL_PROJ_PATH)/src/adc/adc.c
 COMMON_SRC += $(CS140E_FINAL_PROJ_PATH)/src/adc/interrupts-asm.S 
