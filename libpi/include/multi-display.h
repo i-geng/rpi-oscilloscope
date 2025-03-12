@@ -124,6 +124,8 @@ void stats_display_init(void);
 void single_display_init(display_configuration_t display_config);
 
 void multi_display_send_byte(uint32_t index);
+void multi_display_send_page(uint32_t index);
+void multi_display_send_sixteen_bytes(uint32_t index);
 void multi_display_separate_buffers(void);
 
 // Send display buffer to screen via I2C
