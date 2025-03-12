@@ -110,7 +110,7 @@ int vsnprintk(char *buf, unsigned n, const char *fmt, va_list ap) {
                 putchar('.');  // Print decimal point
 
                 f -= int_part;  // Get fractional part
-                f *= 10000;  // Scale for 4 decimal places
+                f *= 100;  // Scale for 2 decimal places
                 int frac_part = (int)(f + 0.5);  // Round properly
 
                 // Manually handle leading zeros for fractional part
@@ -126,8 +126,8 @@ int vsnprintk(char *buf, unsigned n, const char *fmt, va_list ap) {
                     }
                 }
 
-                // Print leading zeros if needed (since we expect 4 digits)
-                for (int i = num_digits; i < 4; i++) {
+                // Print leading zeros if needed (since we expect 2 digits)
+                for (int i = num_digits; i < 2; i++) {
                     putchar('0');
                 }
 
