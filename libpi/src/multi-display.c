@@ -116,6 +116,25 @@ void multi_display_send_byte(uint32_t index) {
   }
 }
 
+void multi_display_send_page(uint32_t index) {
+  for (int d = 0; d < NUM_DISPLAYS; d++) {
+    uint8_t cmd_buf[1 + DISPLAY_WIDTH];
+    cmd_buf[0] = 0x40;
+    memcpy(&cmd_buf[1], &display_buffers_separate[d][index * 128], 128);
+    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 129);
+  }
+}
+
+void multi_display_send_sixteen_bytes(uint32_t index) {
+  for (int d = 0; d < NUM_DISPLAYS; d++) {
+    uint8_t cmd_buf[1 + 16];
+    cmd_buf[0] = 0x40;
+    memcpy(&cmd_buf[1], &display_buffers_separate[d][index * 16], 16);
+    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 17);
+  }
+}
+
+
 void multi_display_separate_buffers(void) {
 
   // Iterate over each row of the multi-display
