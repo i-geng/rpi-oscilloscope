@@ -106,34 +106,21 @@ void single_display_init(display_configuration_t display_config) {
 
 static uint8_t display_buffers_separate[NUM_DISPLAYS][DISPLAY_BUFFER_SIZE];
 
-void multi_display_send_byte(uint32_t index) {
+void multi_display_send_nbytes(uint32_t index, uint32_t nbytes) {
   for (int d = 0; d < NUM_DISPLAYS; d++) {
-    uint8_t cmd_buf[2] = {0x40, 0x00};
-    cmd_buf[1] = display_buffers_separate[d][index];
-    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 2);
-    // uint8_t cmd_buf[1] = {display_buffers_separate[d][index]};
-    // display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 1);
-  }
-}
-
-void multi_display_send_page(uint32_t index) {
-  for (int d = 0; d < NUM_DISPLAYS; d++) {
-    uint8_t cmd_buf[1 + DISPLAY_WIDTH];
+    uint8_t cmd_buf[1 + nbytes];
     cmd_buf[0] = 0x40;
-    memcpy(&cmd_buf[1], &display_buffers_separate[d][index * 128], 128);
-    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 129);
+    memcpy(&cmd_buf[1], &display_buffers_separate[d][index], nbytes);
+    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, nbytes + 1);
   }
 }
 
-void multi_display_send_sixteen_bytes(uint32_t index) {
-  for (int d = 0; d < NUM_DISPLAYS; d++) {
-    uint8_t cmd_buf[1 + 16];
-    cmd_buf[0] = 0x40;
-    memcpy(&cmd_buf[1], &display_buffers_separate[d][index * 16], 16);
-    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 17);
-  }
+void stats_display_send_nbytes(uint32_t index, uint32_t nbytes) {
+  uint8_t cmd_buf[1 + nbytes];
+  cmd_buf[0] = 0x40;
+  memcpy(&cmd_buf[1], &stats_display_buffer[index], nbytes);
+  stats_display_config.i2c_write_func(stats_display_config.device_address, cmd_buf, nbytes + 1);
 }
-
 
 void multi_display_separate_buffers(void) {
 
