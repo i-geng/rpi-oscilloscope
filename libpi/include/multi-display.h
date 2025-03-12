@@ -80,7 +80,7 @@ typedef struct {
 
 // Graph configuration for multi-display
 static graph_configuration_t graph_config = {
-    .margin_left = 10,
+    .margin_left = 30,
     .margin_right = 3,
     .margin_bottom = 8,
     .margin_top = 3,
@@ -88,8 +88,8 @@ static graph_configuration_t graph_config = {
     .x_axis_min = 0,
     .x_axis_max = 10,
 
-    .y_axis_min = 0,
-    .y_axis_max = 10,
+    .y_axis_min = -5,
+    .y_axis_max = 5,
 };
 
 // Enum for monochrome display colors.
@@ -122,6 +122,9 @@ void stats_display_init(void);
 
 // Initialize a single SSD1306 display
 void single_display_init(display_configuration_t display_config);
+
+void multi_display_send_byte(uint32_t index);
+void multi_display_separate_buffers(void);
 
 // Send display buffer to screen via I2C
 // Must be called to actually update the display!

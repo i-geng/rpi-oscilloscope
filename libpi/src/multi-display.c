@@ -87,6 +87,7 @@ void single_display_init(display_configuration_t display_config) {
   // 12. Specify HORIZONTAL addressing mode [SSD1306 pg 35]
   // display_send_command(0x20);
   // display_send_command(0x02);   // page addressing mode [SSD1306 pg 34]
+  
   multi_display_send_command(0x20, display_config);
   // horizontal addressing mode
   multi_display_send_command(0x00, display_config);
@@ -101,6 +102,40 @@ void single_display_init(display_configuration_t display_config) {
   multi_display_send_command(0xAF, display_config);
 
   // TODO: need to clear single display? will there be random noise?
+}
+
+static uint8_t display_buffers_separate[NUM_DISPLAYS][DISPLAY_BUFFER_SIZE];
+
+void multi_display_send_byte(uint32_t index) {
+  for (int d = 0; d < NUM_DISPLAYS; d++) {
+    uint8_t cmd_buf[2] = {0x40, 0x00};
+    cmd_buf[1] = display_buffers_separate[d][index];
+    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 2);
+    // uint8_t cmd_buf[1] = {display_buffers_separate[d][index]};
+    // display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 1);
+  }
+}
+
+void multi_display_separate_buffers(void) {
+
+  // Iterate over each row of the multi-display
+  for (int row = 0; row < (DISPLAY_HEIGHT / 8); row++) {
+    int multi_row_offset = row * MULTI_DISPLAY_WIDTH;
+
+    // Iterate over all the displays
+    for (int d = 0; d < NUM_DISPLAYS; d++) {
+      int d_row_offset = row * DISPLAY_WIDTH;
+      int d_col_offset = d * DISPLAY_WIDTH;
+
+      // Copy the portion for this display
+      // Important: index is (NUM_DISPLAYS - d - 1)
+      // because buffer is copied onto screen from right-to-left, not
+      // left-to-right
+      memcpy(&display_buffers_separate[NUM_DISPLAYS - d - 1][d_row_offset],
+             &multi_display_buffer[multi_row_offset + d_col_offset],
+             DISPLAY_WIDTH);
+    }
+  }
 }
 
 // Send display buffer to screen via I2C
