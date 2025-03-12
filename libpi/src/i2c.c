@@ -38,6 +38,7 @@ void i2c_init_clk_div(unsigned clk_div) {
 }
 
 int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
+    // Return 0 if error, 1 if success
     unsigned int remaining_bytes = nbytes;
     unsigned int data_index = 0;
 
@@ -67,22 +68,25 @@ int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
     uint32_t status = GET32(BSC_S);
     if (status & (1 << 8)) {
         putk("ERR ACK Error\n");
+        return 0;
     }
     if (status & (1 << 9)) {
         putk("CLKT Clock Stretch Timeout\n");
+        return 0;
     }
     if (remaining_bytes != 0) {
         putk("Remaining bytes not 0\n");
+        return 0;
     }
 
     // Set done bit
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
-    return 0;
+    return 1;
 }
 
 int i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
-    
+    // Return 0 if error, 1 if success
     dev_barrier();
 
     unsigned int remaining_bytes = nbytes;
@@ -119,16 +123,19 @@ int i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
     uint32_t status = GET32(BSC_S);
     if (status & (1 << 8)) {
         putk("ERR ACK Error\n");
+        return 0;
     }
     if (status & (1 << 9)) {
         putk("CLKT Clock Stretch Timeout\n");
+        return 0;
     }
     if (remaining_bytes != 0) {
         putk("Remaining bytes not 0\n");
+        return 0;
     }
 
     // Set done bit
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
-    return 0;
+    return 1;
 }
