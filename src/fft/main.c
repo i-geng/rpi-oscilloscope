@@ -23,10 +23,12 @@ void generate_test_signal(float* data_re, float* data_im) {
     
     for(unsigned int i = 0; i < N; i++) {
         // Slow component: cos(2π * i/16)
-        float slow = cos(TWO_PI * i / 16.0);
+        // float slow = cos(TWO_PI * i / 16.0);
+        float slow = 0.0 * cos(TWO_PI * i / 13.0);
         
         // Fast component: 0.5 * cos(2π * i/4)
-        float fast = 0.5 * cos(TWO_PI * i / 4.0);
+        // float fast = 1.5 * cos(TWO_PI * i / 4.0);
+        float fast = 1.5 * cos(TWO_PI * i / 3.0);
         
         // Combine components
         data_re[i] = slow + fast;
@@ -48,15 +50,16 @@ void notmain() {
 
 
     // Plot input signal
-    printk("Input signal plot:\n");
-    plot_signal(data_re, N, 0, 20);
-    printk("\n");
+    // printk("Input signal plot:\n");
+    // plot_signal(data_re, N, 0, 20);
+    // printk("\n");
 
     // Time FFT computation
     start_time = timer_get_usec();
     
-    fft(data_re, data_im, N);
+    int max_index = fft(data_re, data_im, N);
     
+
     uint32_t fft_time = timer_get_usec() - start_time;
     printk("FFT computation time: %d microseconds\n\n", fft_time);
 
@@ -70,10 +73,12 @@ void notmain() {
     float magnitude[N/2];
     for(unsigned int i = 0; i < N/2; i++) {
         magnitude[i] = data_re[i] * data_re[i] + data_im[i] * data_im[i];
-        printk("Frequency bin %d: %d\n", i, (int)(magnitude[i] * 1000));
+        if (magnitude[i] > 10) {
+            printk("Frequency bin %d: %d\n", i, (int)(magnitude[i] * 1000));
+        }
     }
-        
-    printk("Magnitude spectrum plot:\n");
+    printk("Max index: %d\n", max_index);
+    // printk("Magnitude spectrum plot:\n");
     // plot_signal(magnitude, N/2, 0, 2);
     printk("FFT test completed!\n");
 }
