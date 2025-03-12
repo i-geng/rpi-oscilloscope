@@ -48,9 +48,9 @@ void notmain(void) {
         count++;
 
         // Test update the display
-        // multi_display_clear();
+        multi_display_clear();
         // multi_display_draw_graph_axes();
-        // multi_display_show();
+        multi_display_show();
     }
 
     printk("Sample rate: %d Hz\n", count / test_duration);

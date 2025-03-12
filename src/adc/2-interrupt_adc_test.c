@@ -65,6 +65,7 @@ extern void dev_barrier(void);
 
 // We'll store ADC samples here
 volatile float adc_data[1000];
+volatile uint32_t time_stamps[1000];
 volatile int sample_count = 0;
 volatile uint32_t start_time, last_time;
 
@@ -148,12 +149,11 @@ void interrupt_vector(unsigned pc) {
         // Call our ADC read logic
         // (this used to be "gpio_interrupt_handler" function)
         
-        uint32_t current_time = timer_get_usec_raw();
-        uint32_t time_since_last = current_time - last_time;
-        last_time = current_time;
+        uint32_t current_time = timer_get_usec();
 
         // Read ADC data
         adc_data[sample_count] = adc_read(adc);
+        time_stamps[sample_count] = current_time;
 
         // Print every 100 samples
         // if ((sample_count % 10) == 0) {
@@ -183,6 +183,19 @@ void interrupt_vector(unsigned pc) {
     dev_barrier();
 }
 
+
+
+int get_interval_usec(
+    uint32_t start_time,
+    uint32_t end_time
+) {
+    if (end_time < start_time) {
+        // Wrap around
+        return (0xFFFFFFFF - start_time) + end_time;
+    }
+    return end_time - start_time;
+}
+
 //-------------------------------------------------------------------
 // 4) MAIN CODE
 //-------------------------------------------------------------------
@@ -203,7 +216,7 @@ void notmain(void) {
     enable_gpio_int_0_31();
 
     printk("Initializing ADC...\n");
-    adc = adc_init(interrupt_pin, PGA_6144);
+    adc = adc_init(interrupt_pin, PGA_6144, AIN0);
 
     // Reset sampling state
     sample_count = 0;
@@ -213,17 +226,39 @@ void notmain(void) {
     printk("Enabling global interrupts...\n");
     enable_interrupts();
 
-    printk("Waiting for 1000 samples...\n");
-    while(sample_count < 1000) {
-        // In a real program, do other work here
-        // or go to sleep. The interrupt will handle ADC sampling.
+    printk("Waiting for 1 second...\n");
+
+    uint32_t start_time = timer_get_usec();
+
+    int count = 0;
+
+    while(get_interval_usec(start_time, timer_get_usec()) < 1000000 && sample_count < 1000) {
+        // 1 second
+        count++;
     }
 
-    for(int i = 0; i<1000; i ++){
-        printk("%f \n", adc_data[i]);
-    }
+    // while(sample_count < 1000) {
+    //     // In a real program, do other work here
+    //     // or go to sleep. The interrupt will handle ADC sampling.
+    // }
 
+    printk("Sample count: %d\n", sample_count);
+    printk("Count: %d\n", count);
     disable_interrupts();
+
+    for(int i = 0; i<sample_count-1; i ++){
+        printk("Index: %d, Interval: %d.%d ms, Data: %f \n", i, 
+                (int)((time_stamps[i+1] - time_stamps[i]) / 1000),
+                (int)((time_stamps[i+1] - time_stamps[i]) % 1000),
+                adc_data[i]);
+    }
+
+    for(int i = 0; i<sample_count; i ++){
+        // print in csv format
+        printk("%d,%f\n", time_stamps[i], adc_data[i]);
+    }
+
+    
 
     printk("Data collection complete.\n");
 

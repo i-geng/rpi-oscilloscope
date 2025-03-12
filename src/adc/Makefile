@@ -1,9 +1,9 @@
 BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 
 # PROGS := 1-interrupt_adc_test.c 
-# PROGS := 2-interrupt_adc_test.c 
+PROGS := 2-interrupt_adc_test.c 
 # PROGS := 0-adc_test.c
-PROGS := pwm-test.c
+# PROGS := pwm-test.c
 
 COMMON_SRC += adc.c
 COMMON_SRC += interrupts-asm.S 
@@ -17,7 +17,7 @@ LIB_POST += $(CS140E_2025_PATH)/lib/libgcc.a
 # LIB_POST += $(CS140E_2025_PATH)/lib/libc.a
 
 # define this if you need to give the device for your pi
-TTYUSB = /dev/ttyUSB2
+# TTYUSB = /dev/ttyUSB2
 
 # set RUN = 1 if you want the code to automatically run after building.
 RUN = 1
