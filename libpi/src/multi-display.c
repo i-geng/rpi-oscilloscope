@@ -620,7 +620,7 @@ void multi_display_draw_graph_axes(void) {
                                    graph_config.x_vertical, COLOR_WHITE);
 
   // Draw label for x-axis maximum
-  char x_buffer[6];
+  char x_buffer[12];
   snprintk(x_buffer, sizeof(x_buffer), "%d", graph_config.x_axis_max);
 
   for (size_t i = 1; i <= strlen(x_buffer); i++) {
@@ -631,7 +631,7 @@ void multi_display_draw_graph_axes(void) {
   }
 
   // Draw label for y-axis maximum
-  char y_buffer[6];
+  char y_buffer[12];
   snprintk(y_buffer, sizeof(y_buffer), "%d", graph_config.y_axis_max);
 
   for (size_t i = 1; i <= strlen(y_buffer); i++) {
@@ -693,10 +693,7 @@ void multi_display_draw_graph_tick(uint32_t label) {
                                  MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom - 8,
                                  y_min_buffer[strlen(y_min_buffer) - i], COLOR_WHITE);
   }
-
-
 }
-
 
 void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N, color_t color) {
   // Precompute scaling factors outside the loop
@@ -719,9 +716,11 @@ void stats_display_draw_data(float amplitude, float frequency) {
   // Amplitude value
   stats_display_draw_character_size(0, 15, 'A', COLOR_WHITE, 2, 2);
   stats_display_draw_character_size(15, 15, '=', COLOR_WHITE, 2, 2);
-  char a_buffer[12];
+  char a_buffer[128];
   snprintk(a_buffer, sizeof(a_buffer), "%f", amplitude);
-  for (size_t i = 0; i < strlen(a_buffer); i++) {
+  uint32_t num_chars_to_print = 0;
+  num_chars_to_print = strlen(a_buffer) < 6 ? strlen(a_buffer) : 6;
+  for (size_t i = 0; i < num_chars_to_print; i++) {
     stats_display_draw_character_size(30 + 11 * i,
                                       15,
                                       a_buffer[i], 
@@ -738,9 +737,10 @@ void stats_display_draw_data(float amplitude, float frequency) {
   // Frequency value
   stats_display_draw_character_size(0, 35, 'f', COLOR_WHITE, 2, 2);
   stats_display_draw_character_size(15, 35, '=', COLOR_WHITE, 2, 2);
-  char f_buffer[12];
-  snprintk(f_buffer, sizeof(f_buffer), "%f", frequency);
-  for (size_t i = 0; i < strlen(f_buffer); i++) {
+  char f_buffer[128];
+  snprintk(f_buffer, 6, "%f", frequency);
+  num_chars_to_print = strlen(f_buffer) < 6 ? strlen(f_buffer) : 6;
+  for (size_t i = 0; i < num_chars_to_print; i++) {
     stats_display_draw_character_size(30 + 11 * i,
                                       35,
                                       f_buffer[i], 
