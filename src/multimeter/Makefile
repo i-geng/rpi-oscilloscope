@@ -8,7 +8,7 @@ PROGS := 1-multimeter-buffer.c
 
 INCLUDE +=
 # COMMON_SRC += $(CS140E_FINAL_PROJ_PATH)/src/display_ig/display.c
-COMMON_SRC += multi-display.c
+# COMMON_SRC += multi-display.c
 COMMON_SRC += ascii-font.c
 # COMMON_SRC += signal_processing.c
 
