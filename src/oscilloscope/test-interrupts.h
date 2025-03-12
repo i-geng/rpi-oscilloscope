@@ -6,6 +6,12 @@
 #include "rpi-interrupts.h"
 #include "rpi-inline-asm.h"
 #include "cycle-count.h"
+#include "nrf.h"
+#include "adc.h"
+
+extern nrf_t *nrf_client;
+extern nrf_t *nrf_server;
+extern ADC_STRUCT *adc;
 
 // we provide this code: does global initialization.  
 //   see <test-interrupts.c>
@@ -20,6 +26,17 @@ extern volatile int n_interrupt;
 // static uint32_t in_pin;
 // enum { out_pin = 21, in_pin = 20 };
 enum { N = 1024*32 };
+
+
+// 32-byte packaet fragment
+typedef struct {
+  uint8_t fragment; // 1 byte
+  uint8_t total_fragments; // 1 byte
+  // uint8_t reserved[2]; // 2 bytes
+  uint16_t packet_size; // 2 bytes
+  float data[7]; // 7 * 4 bytes = 28 bytes
+} fragment_t;
+
 
 
 #endif

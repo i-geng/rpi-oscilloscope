@@ -3,6 +3,10 @@
 #include "test-interrupts.h"
 #include "timer-interrupt.h"
 #include "vector-base.h"
+#include "multi-display.h"
+#include "multi-i2c.h"
+
+#define samples 128
 
 static inline void gpio_clear_event_detect(unsigned pin) {
     // Write to clear event
@@ -10,11 +14,18 @@ static inline void gpio_clear_event_detect(unsigned pin) {
     dev_barrier();
 }
 
-
 // default vector: just forwards it to the registered
 // handler see <test-interrupts.h> and the given test.
 void interrupt_vector(unsigned pc) {
     dev_barrier();
+    static uint32_t adc_irq_count;
+    // const uint32_t samples = 100;
+    static float y_data[samples];
+    static float x_data[samples];
+
+    for (int i = 0; i < samples; i++) {
+        x_data[i] = i;
+    }
 
     // Check that the interrupt was caused by the gpio
     unsigned GPIO_gpeds0 = 0x20200000 + 0x40;
@@ -26,16 +37,68 @@ void interrupt_vector(unsigned pc) {
     const uint32_t ADC_IRQ_PIN = 17;
 
     if((event_status & (1 << NRF_IRQ_PIN_2))) {
-        // draw text to third display();
-        printk("NRF interrupt pin %d\n", NRF_IRQ_PIN_2);
+        // printk("NRF interrupt pin %d\n", NRF_IRQ_PIN_2);
         gpio_clear_event_detect(NRF_IRQ_PIN_2);
-        nrf_clear();/
+        // nrf_clear();
+        // draw text to third display();
+        uint32_t received_data_size = 1; ///////////////////
+        float received_data[received_data_size];
+
+        if (nrf_read_exact_noblk(nrf_client, received_data, received_data_size * sizeof(*received_data)) == received_data_size * sizeof(*received_data)) {
+            float frequency = received_data[0];
+            // float amplitude = received_data[1];
+            float amplitude = 112;
+            printk("Frequency is %f\n", frequency);
+            // printk("Amplitude is %f\n", amplitude);
+            stats_display_clear();
+            stats_display_draw_data(amplitude, frequency);
+            stats_display_show();
+        }
+
     } 
     if(event_status & (1 << ADC_IRQ_PIN)) {
         // draw wave, send nrf data();
-        printk("ADC interrupt pin %d\n", ADC_IRQ_PIN);
+        // printk("ADC interrupt pin %d, reading ADC\n", ADC_IRQ_PIN);
         gpio_clear_event_detect(ADC_IRQ_PIN);
+        float adc_read_data = (adc_read(adc) > 6) ? 0 : adc_read(adc);
+        y_data[adc_irq_count % samples] = adc_read_data;
+        adc_irq_count++;
+        if (adc_irq_count >= samples) {
+            adc_irq_count = 0;
+            printk("%f \n", y_data[0]);
+            multi_display_clear();
+            // multi_display_draw_graph_tick(i);
+            multi_display_draw_graph_data(x_data, y_data, samples, COLOR_WHITE);
+            multi_display_draw_graph_tick(samples * 1.2);
+            // multi_display_draw_graph_axes();
+            multi_display_show();  
 
+            // construct packet fragments and send each fragment one by one
+            uint32_t total_fragments = samples / 7 + (samples % 7 != 0);
+
+            for (int j = 0; j < total_fragments; j ++) {
+                fragment_t packet;
+                packet.fragment = j;
+                packet.total_fragments = total_fragments;
+                packet.packet_size = samples;
+                for (int k = 0; k < 7; k ++) {
+                    if (j * 7 + k < samples) {
+                        packet.data[k] = y_data[j * 7 + k];
+                    } else {
+                        packet.data[k] = -1;
+                    }
+                }
+                nrf_tx_send_noack(nrf_server, 0xe6e6e6, &packet, sizeof(packet)); // send data to address 0xe6e6e6 (RX address of processing Pi)
+                // printk("[Main Pi] Sent fragment #%d of %d.\n", packet.fragment, packet.total_fragments);
+                // printk("[Main Pi] Data: ");
+                // for (int k = 0; k < 7; k ++) {
+                //     printk("%f ", packet.data[k]);
+                // }
+                // printk("\n");
+            }
+            // printk("[Main Pi] Sent all fragments.\n");
+        }
+        
     }
     dev_barrier();
 }
