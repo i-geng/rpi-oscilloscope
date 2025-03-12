@@ -653,29 +653,40 @@ void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N,
 }
 
 void stats_display_draw_data(float amplitude, float frequency) {
-  stats_display_draw_character_size(5, 15, 'A', COLOR_WHITE, 2, 2);
-  stats_display_draw_character_size(20, 15, '=', COLOR_WHITE, 2, 2);
+  // Amplitude value
+  stats_display_draw_character_size(0, 15, 'A', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(15, 15, '=', COLOR_WHITE, 2, 2);
   char a_buffer[12];
   snprintk(a_buffer, sizeof(a_buffer), "%f", amplitude);
   for (size_t i = 0; i < strlen(a_buffer); i++) {
-    stats_display_draw_character_size(35 + 11 * i,
+    stats_display_draw_character_size(30 + 11 * i,
                                       15,
                                       a_buffer[i], 
                                       COLOR_WHITE,
                                       2,
                                       2);
   }
+
+  // Amplitude units (Vpp)
+  stats_display_draw_character_size(106, 15, 'V', COLOR_WHITE, 2, 2);
+  stats_display_draw_character(118, 23, 'P', COLOR_WHITE);
+  stats_display_draw_character(123, 23, 'P', COLOR_WHITE);
   
-  stats_display_draw_character_size(5, 35, 'f', COLOR_WHITE, 2, 2);
-  stats_display_draw_character_size(20, 35, '=', COLOR_WHITE, 2, 2);
+  // Frequency value
+  stats_display_draw_character_size(0, 35, 'f', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(15, 35, '=', COLOR_WHITE, 2, 2);
   char f_buffer[12];
   snprintk(f_buffer, sizeof(f_buffer), "%f", frequency);
   for (size_t i = 0; i < strlen(f_buffer); i++) {
-    stats_display_draw_character_size(35 + 11 * i,
+    stats_display_draw_character_size(30 + 11 * i,
                                       35,
                                       f_buffer[i], 
                                       COLOR_WHITE,
                                       2,
                                       2);
   }
+
+  // Frequency units (Hz)
+  stats_display_draw_character_size(106, 35, 'H', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(117, 35, 'z', COLOR_WHITE, 2, 2);
 }
