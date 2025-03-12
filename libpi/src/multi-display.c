@@ -115,6 +115,13 @@ void multi_display_send_nbytes(uint32_t index, uint32_t nbytes) {
   }
 }
 
+void stats_display_send_nbytes(uint32_t index, uint32_t nbytes) {
+  uint8_t cmd_buf[1 + nbytes];
+  cmd_buf[0] = 0x40;
+  memcpy(&cmd_buf[1], &stats_display_buffer[index], nbytes);
+  stats_display_config.i2c_write_func(stats_display_config.device_address, cmd_buf, nbytes + 1);
+}
+
 void multi_display_separate_buffers(void) {
 
   // Iterate over each row of the multi-display

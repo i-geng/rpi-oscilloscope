@@ -123,6 +123,7 @@ void stats_display_init(void);
 // Initialize a single SSD1306 display
 void single_display_init(display_configuration_t display_config);
 
+void stats_display_send_nbytes(uint32_t index, uint32_t nbytes);
 void multi_display_send_nbytes(uint32_t index, uint32_t nbytes);
 void multi_display_separate_buffers(void);
 
