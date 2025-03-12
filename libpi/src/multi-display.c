@@ -87,6 +87,7 @@ void single_display_init(display_configuration_t display_config) {
   // 12. Specify HORIZONTAL addressing mode [SSD1306 pg 35]
   // display_send_command(0x20);
   // display_send_command(0x02);   // page addressing mode [SSD1306 pg 34]
+  
   multi_display_send_command(0x20, display_config);
   // horizontal addressing mode
   multi_display_send_command(0x00, display_config);
@@ -101,6 +102,40 @@ void single_display_init(display_configuration_t display_config) {
   multi_display_send_command(0xAF, display_config);
 
   // TODO: need to clear single display? will there be random noise?
+}
+
+static uint8_t display_buffers_separate[NUM_DISPLAYS][DISPLAY_BUFFER_SIZE];
+
+void multi_display_send_byte(uint32_t index) {
+  for (int d = 0; d < NUM_DISPLAYS; d++) {
+    uint8_t cmd_buf[2] = {0x40, 0x00};
+    cmd_buf[1] = display_buffers_separate[d][index];
+    display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 2);
+    // uint8_t cmd_buf[1] = {display_buffers_separate[d][index]};
+    // display_config_arr[d].i2c_write_func(display_config_arr[d].device_address, cmd_buf, 1);
+  }
+}
+
+void multi_display_separate_buffers(void) {
+
+  // Iterate over each row of the multi-display
+  for (int row = 0; row < (DISPLAY_HEIGHT / 8); row++) {
+    int multi_row_offset = row * MULTI_DISPLAY_WIDTH;
+
+    // Iterate over all the displays
+    for (int d = 0; d < NUM_DISPLAYS; d++) {
+      int d_row_offset = row * DISPLAY_WIDTH;
+      int d_col_offset = d * DISPLAY_WIDTH;
+
+      // Copy the portion for this display
+      // Important: index is (NUM_DISPLAYS - d - 1)
+      // because buffer is copied onto screen from right-to-left, not
+      // left-to-right
+      memcpy(&display_buffers_separate[NUM_DISPLAYS - d - 1][d_row_offset],
+             &multi_display_buffer[multi_row_offset + d_col_offset],
+             DISPLAY_WIDTH);
+    }
+  }
 }
 
 // Send display buffer to screen via I2C
@@ -612,14 +647,18 @@ void multi_display_draw_graph_tick(uint32_t label) {
                                        graph_config.margin_bottom,
                                    graph_config.x_vertical, COLOR_WHITE);
 
-  // Draw label for x-axis maximum
+  // Draw label
   char x_buffer[12];
   snprintk(x_buffer, sizeof(x_buffer), "%d", label);
 
+  // Label units (ms)
+  multi_display_draw_character(MULTI_DISPLAY_WIDTH - graph_config.margin_right - 6, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom, 's', COLOR_WHITE);
+  multi_display_draw_character(MULTI_DISPLAY_WIDTH - graph_config.margin_right - 12, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom, 'm', COLOR_WHITE);
+
   for (size_t i = 1; i <= strlen(x_buffer); i++) {
     multi_display_draw_character(MULTI_DISPLAY_WIDTH -
-                                     graph_config.margin_right - 5 * i,
-                                 graph_config.y_horizontal + 1,
+                                     graph_config.margin_right - 6 * (i+2),
+                                 MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom,
                                  x_buffer[strlen(x_buffer) - i], COLOR_WHITE);
   }
 
@@ -627,11 +666,29 @@ void multi_display_draw_graph_tick(uint32_t label) {
   char y_buffer[12];
   snprintk(y_buffer, sizeof(y_buffer), "%d", graph_config.y_axis_max);
 
+  // Units (V)
+  multi_display_draw_character(graph_config.x_vertical - 6, graph_config.margin_top, 'V', COLOR_WHITE);
+
   for (size_t i = 1; i <= strlen(y_buffer); i++) {
-    multi_display_draw_character(graph_config.x_vertical - 5 * i,
+    multi_display_draw_character(graph_config.x_vertical - 6 * (i+1),
                                  graph_config.margin_top,
                                  y_buffer[strlen(y_buffer) - i], COLOR_WHITE);
   }
+
+  // Draw label for y-axis minimum
+  char y_min_buffer[12];
+  snprintk(y_min_buffer, sizeof(y_min_buffer), "%d", graph_config.y_axis_min);
+
+  // Units (V)
+  multi_display_draw_character(graph_config.x_vertical - 6, MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom - 8, 'V', COLOR_WHITE);
+
+  for (size_t i = 1; i <= strlen(y_min_buffer); i++) {
+    multi_display_draw_character(graph_config.x_vertical - 6 * (i+1),
+                                 MULTI_DISPLAY_HEIGHT - graph_config.margin_bottom - 8,
+                                 y_min_buffer[strlen(y_min_buffer) - i], COLOR_WHITE);
+  }
+
+
 }
 
 
@@ -653,29 +710,40 @@ void multi_display_draw_graph_data(float *x_values, float *y_values, uint16_t N,
 }
 
 void stats_display_draw_data(float amplitude, float frequency) {
-  stats_display_draw_character_size(5, 15, 'A', COLOR_WHITE, 2, 2);
-  stats_display_draw_character_size(20, 15, '=', COLOR_WHITE, 2, 2);
+  // Amplitude value
+  stats_display_draw_character_size(0, 15, 'A', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(15, 15, '=', COLOR_WHITE, 2, 2);
   char a_buffer[12];
   snprintk(a_buffer, sizeof(a_buffer), "%f", amplitude);
   for (size_t i = 0; i < strlen(a_buffer); i++) {
-    stats_display_draw_character_size(35 + 11 * i,
+    stats_display_draw_character_size(30 + 11 * i,
                                       15,
                                       a_buffer[i], 
                                       COLOR_WHITE,
                                       2,
                                       2);
   }
+
+  // Amplitude units (Vpp)
+  stats_display_draw_character_size(106, 15, 'V', COLOR_WHITE, 2, 2);
+  stats_display_draw_character(118, 23, 'P', COLOR_WHITE);
+  stats_display_draw_character(123, 23, 'P', COLOR_WHITE);
   
-  stats_display_draw_character_size(5, 35, 'f', COLOR_WHITE, 2, 2);
-  stats_display_draw_character_size(20, 35, '=', COLOR_WHITE, 2, 2);
+  // Frequency value
+  stats_display_draw_character_size(0, 35, 'f', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(15, 35, '=', COLOR_WHITE, 2, 2);
   char f_buffer[12];
   snprintk(f_buffer, sizeof(f_buffer), "%f", frequency);
   for (size_t i = 0; i < strlen(f_buffer); i++) {
-    stats_display_draw_character_size(35 + 11 * i,
+    stats_display_draw_character_size(30 + 11 * i,
                                       35,
                                       f_buffer[i], 
                                       COLOR_WHITE,
                                       2,
                                       2);
   }
+
+  // Frequency units (Hz)
+  stats_display_draw_character_size(106, 35, 'H', COLOR_WHITE, 2, 2);
+  stats_display_draw_character_size(117, 35, 'z', COLOR_WHITE, 2, 2);
 }
