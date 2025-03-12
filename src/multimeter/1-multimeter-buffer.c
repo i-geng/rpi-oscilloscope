@@ -2,7 +2,7 @@
 #include "i2c.h"
 #include "adc.h"
 #include "multi-display.h"
-#include "signal_processing.h"
+// #include "signal_processing.h"
 
 // #define DCOFFSETDEFINEDABOVE 1
 
@@ -51,20 +51,20 @@ void notmain(void) {
     adc_change_channel(adc, AIN3);
 
     // Wait approx two periods to be safe
-    delay_ms(3);
+    // delay_ms(3);
 
-    int horizontal_scaling = (int) (adc_read(adc) * 5);
+    int horizontal_scaling = 5;
 
-    adc_change_channel(adc, AIN2);
-    delay_ms(3);
+    // adc_change_channel(adc, AIN2);
+    // delay_ms(3);
 
-    int vertical_scaling = (int) (adc_read(adc));
+    int vertical_scaling = 5;
 
-    adc_change_channel(adc, AIN1);
-    delay_ms(3);
+    // adc_change_channel(adc, AIN1);
+    // delay_ms(3);
 
 
-    float offset = adc_read(adc);
+    float offset = 0;
 
     adc_change_channel(adc, AIN0);
     delay_ms(3);
