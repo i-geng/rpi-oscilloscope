@@ -209,7 +209,11 @@ void stats_display_fill_white(void) {
 
 // Draw a pixel at coordinates (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
-void multi_display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
+void multi_display_draw_pixel(int32_t x, int32_t y, color_t color) {
+  if ((x < 0) || (x > MULTI_DISPLAY_WIDTH - 1) || (y < 0) || (y > MULTI_DISPLAY_HEIGHT - 1)) {
+    return;
+  }
+
   x = MULTI_DISPLAY_WIDTH - x - 1;
   switch (color) {
   case COLOR_WHITE:
@@ -224,7 +228,11 @@ void multi_display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
   }
 }
 
-void stats_display_draw_pixel(uint16_t x, uint16_t y, color_t color) {
+void stats_display_draw_pixel(int32_t x, int32_t y, color_t color) {
+  if ((x < 0) || (x > DISPLAY_WIDTH - 1) || (y < 0) || (y > DISPLAY_HEIGHT - 1)) {
+    return;
+  }
+
   x = DISPLAY_WIDTH - x - 1;
   switch (color) {
   case COLOR_WHITE:
