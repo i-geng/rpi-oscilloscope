@@ -22,16 +22,12 @@ Processing (cloud) Pi RX address: 0xe6e6e6
 #define NRF_IRQ_PIN 23
 #define ADC_IRQ_PIN 17
 
-
 nrf_t *nrf_client;
 nrf_t *nrf_server;
 ADC_STRUCT *adc;
 
 void notmain(void) {
   kmalloc_init();
-
-  uint16_t base_samples = 100;
-  uint16_t samples = base_samples;
 
   uint32_t received_data_size = 1; //////////////
   float *received_data = kmalloc(sizeof(*received_data) * received_data_size);
@@ -51,7 +47,7 @@ void notmain(void) {
   multi_display_clear();
   stats_display_clear();
 
-  multi_display_configure_graph_axes(0, 128, 0, 6);
+  multi_display_configure_graph_axes(0, samples, -3, 3);
 
   adc = adc_init(ADC_IRQ_PIN, PGA_6144, AIN0); // initialize ADC
   printk("[Main Pi] ADC initialized.\n");

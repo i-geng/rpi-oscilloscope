@@ -27,6 +27,7 @@ extern volatile int n_interrupt;
 // enum { out_pin = 21, in_pin = 20 };
 enum { N = 1024*32 };
 
+#define samples 133
 
 // 32-byte packaet fragment
 typedef struct {
