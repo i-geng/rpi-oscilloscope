@@ -29,6 +29,10 @@ enum { N = 1024*32 };
 
 #define samples 133
 
+#define offset AIN1
+#define horizontal_scaling AIN2
+#define vertical_scaling AIN3
+
 // 32-byte packaet fragment
 typedef struct {
   uint8_t fragment; // 1 byte

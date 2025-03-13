@@ -9,6 +9,9 @@
 
 float peak_to_peak = 0;
 float frequency = 0;
+float offset_reading = 0;
+float horizontal_scaling_reading = 0;
+float vertical_scaling_reading = 0;
 
 static inline void gpio_clear_event_detect(unsigned pin) {
     // Write to clear event
@@ -75,14 +78,31 @@ void interrupt_vector(unsigned pc) {
 
     } 
     if(event_status & (1 << ADC_IRQ_PIN)) {
-        // draw wave, send nrf data();
-        // printk("ADC interrupt pin %d, reading ADC\n", ADC_IRQ_PIN);
         gpio_clear_event_detect(ADC_IRQ_PIN);
         float adc_read_data = (adc_read(adc) > 6) ? 0 : adc_read(adc);
-        y_data[adc_irq_count % samples] = adc_read_data - 2.5;
+        y_data[adc_irq_count % samples] = adc_read_data - 2.5 + (offset_reading - 2.5);
         adc_irq_count++;
         if (adc_irq_count >= samples) {
             adc_irq_count = 0;
+
+            adc_change_channel(adc, offset);
+            delay_ms(3);
+            offset_reading = adc_read(adc);
+            // printk("[Main Pi] Offset reading: %d\n", offset_reading);
+
+            adc_change_channel(adc, horizontal_scaling);
+            delay_ms(3);
+            horizontal_scaling_reading = adc_read(adc);
+            // printk("[Main Pi] Horizontal scaling reading: %d\n", horizontal_scaling_reading);
+
+            adc_change_channel(adc, vertical_scaling);
+            delay_ms(3);
+            vertical_scaling_reading = adc_read(adc);
+            // printk("[Main Pi] Vertical scaling reading: %d\n", vertical_scaling_reading);
+
+            adc_change_channel(adc, AIN0);
+            delay_ms(3);
+
 
             // construct packet fragments and send each fragment one by one
             uint32_t total_fragments = samples / 7 + (samples % 7 != 0);
@@ -100,12 +120,12 @@ void interrupt_vector(unsigned pc) {
                     }
                 }
                 nrf_tx_send_noack(nrf_server, 0xe6e6e6, &packet, sizeof(packet)); // send data to address 0xe6e6e6 (RX address of processing Pi)
-                printk("[Main Pi] Sent fragment #%d of %d.\n", packet.fragment, packet.total_fragments);
-                printk("[Main Pi] Data: ");
-                for (int k = 0; k < 7; k ++) {
-                    printk("%f ", packet.data[k]);
-                }
-                printk("\n");
+                // printk("[Main Pi] Sent fragment #%d of %d.\n", packet.fragment, packet.total_fragments);
+                // printk("[Main Pi] Data: ");
+                // for (int k = 0; k < 7; k ++) {
+                //     printk("%f ", packet.data[k]);
+                // }
+                // printk("\n");
             }
             printk("[Main Pi] Sent all fragments.\n");
             
@@ -121,8 +141,15 @@ void interrupt_vector(unsigned pc) {
             disable_interrupts();
             multi_display_clear();
             // multi_display_draw_graph_tick(i);
+            float vertical_min = -vertical_scaling_reading - 1;
+            vertical_min = vertical_min < -6 ? -6 : vertical_min;
+            float vertical_max = vertical_scaling_reading + 1;
+            vertical_max = vertical_max > 6 ? 6 : vertical_max;
+            float horizontal_max = ((uint16_t) horizontal_scaling_reading + 1) / 4.0 * 64.0;
+            horizontal_max = horizontal_max > samples ? samples : horizontal_max;
+            multi_display_configure_graph_axes(0, horizontal_max, vertical_min, vertical_max);
             multi_display_draw_graph_data(x_data, y_data, samples, COLOR_WHITE);
-            multi_display_draw_graph_tick(samples * 1.2);
+            multi_display_draw_graph_tick(horizontal_max * 1.16);
             // multi_display_draw_graph_axes();
             multi_display_show();  
 

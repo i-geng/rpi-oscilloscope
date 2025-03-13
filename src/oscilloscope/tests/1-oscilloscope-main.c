@@ -22,6 +22,8 @@ Processing (cloud) Pi RX address: 0xe6e6e6
 #define NRF_IRQ_PIN 23
 #define ADC_IRQ_PIN 17
 
+
+
 nrf_t *nrf_client;
 nrf_t *nrf_server;
 ADC_STRUCT *adc;
@@ -57,5 +59,6 @@ void notmain(void) {
   for (int i = 0; i < 5000000; i ++){
     delay_ms(500);
   }
+  // printk("[Main Pi] ADC data read.\n");
 
 }
