@@ -1,4 +1,4 @@
-#include "math.h"
+#include "fft.h"
 
 float normalize_angle(float x) {
     return fmod(x + PI, TWO_PI) - PI;
@@ -93,8 +93,94 @@ int fft(float data_re[], float data_im[], const unsigned int N) {
         return -1;
     }
 
+    for (int i = 0; i < 128; i ++){
+        data_im[i] = 0;
+    }
+
+    // printk("Data in fft: \n");
+    // for (int i = 0; i < 128; i++) {
+    //     // if (received_data[i] == -1) {
+    //         // break;
+    //     // }
+    //     printk("%f %f", data_re[i], data_im[i]);
+    //     printk("\n");
+    // }
+        
+
     rearrange(data_re, data_im, N);
-    int max_index = compute(data_re, data_im, N);
+
+    // printk("After rearrange: \n");
+    // for (int i = 0; i < 128; i++) {
+    //     // if (received_data[i] == -1) {
+    //         // break;
+    //     // }
+    //     printk("%f %f", data_re[i], data_im[i]);
+    //     printk("\n");
+    // }
+        
+
+    // for (int i = 0; i < (N + 7-1)/7; i ++){
+    //     for (int j = 0; j < 7; j ++){
+    //         printk("%f ", data_re[i*7 + j]);
+    //     }
+    //     printk("\n");
+    //     // printk("Data index %d is %f\n",i, data_re[i]);
+    // }
+
+    // float* real = kmalloc(N * sizeof(float));
+    float real[N];
+    float imag[N];
+    for (int i = 0; i < 128; i ++){
+        real[i] = data_re[i];
+        imag[i] = data_im[i];
+    }
+    // memcpy(real, data_re, N * sizeof(float));
+    // memset()
+    // float* imag = kmalloc(N * sizeof(float));
+    // float imag[N];
+    // memcpy(imag, data_im, N * sizeof(float));
+
+
+
+
+
+    int max_index = compute(real, imag, N);
+
+
+    // for (int i = 0; i < (N + 7-1)/7; i ++){
+    //     for (int j = 0; j < 7; j ++){
+    //         printk("%f ", real[i*7 + j]);
+    //     }
+    //     printk("\n");
+    //     // printk("Data index %d is %f\n",i, data_re[i]);
+    // }
+
+    // our signal generator can't output below 40 hz
+    // if (max_index < 6){
+    //     for (int i = 0; i < N; i ++){
+    //         // for (int j = 0; j < 7; j ++){
+    //         //     printk("%f ", real[i*7 + j] * real[i*7 + j] + imag[i*7 + j] * imag[i*7 + j]);
+    //         // }
+    //         // printk("\n");
+
+    //         printk("magn index %d = %f \n",i,  real[i] * real[i] + imag[i] * imag[i]);
+    //         // printk("Data index %d is %f\n",i, data_re[i]);
+    //     }
+    // }
+
+    // if (max_index < 6){
+    //     for (int i = 0; i < N; i ++){
+    //         // for (int j = 0; j < 7; j ++){
+    //         //     printk("%f ", real[i*7 + j] * real[i*7 + j] + imag[i*7 + j] * imag[i*7 + j]);
+    //         // }
+    //         // printk("\n");
+
+    //         printk("real index %d = %f \n",i,  real[i]);
+    //         // printk("Data index %d is %f\n",i, data_re[i]);
+    //     }
+    // }
+
+
     return max_index;
 }
 
@@ -143,14 +229,18 @@ int compute(float data_re[], float data_im[], const unsigned int N) {
                     // Only check first half of frequencies
                     if (pair < N/2) {
                         float magnitude = data_re[pair] * data_re[pair] + data_im[pair] * data_im[pair];
-                        if (magnitude > max_magnitude) {
+                        
+                        if ((magnitude > max_magnitude) && (pair > 0)) {
                             max_magnitude = magnitude;
                             max_index = pair;
+                            // printk("max index is %d \n", max_index);
                         }
+                        // printk("magnitude index %d is %f \n", pair, magnitude);
+                        // printk("Magnitude 2 is %f, %f \n", pair*860/(2*128),magnitude);
                     }
                     if (match < N/2) {
                         float magnitude = data_re[match] * data_re[match] + data_im[match] * data_im[match];
-                        if (magnitude > max_magnitude) {
+                        if ((magnitude > max_magnitude) && (match > 0)) {
                             max_magnitude = magnitude;
                             max_index = match;
                         }

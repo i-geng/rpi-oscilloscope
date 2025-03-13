@@ -3,6 +3,8 @@ BOOTLOADER = $(CS140E_FINAL_PROJ_PATH)/bin/pi-install
 # PROGS := tests/0-oscilloscope.c
 # PROGS := tests/0-oscilloscope-main.c
 PROGS := tests/1-oscilloscope-main.c
+# PROGS := tests/1-oscilloscope-cloud.c
+
 COMMON_SRC += test-interrupts.c
 COMMON_SRC += interrupt-vec.c interrupt-asm.S 
 # PROGS := tests/2-oscilloscope-main.c

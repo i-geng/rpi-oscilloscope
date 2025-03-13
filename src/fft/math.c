@@ -93,6 +93,8 @@ int fft(float data_re[], float data_im[], const unsigned int N) {
         return -1;
     }
 
+    printk("AAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+
     rearrange(data_re, data_im, N);
     int max_index = compute(data_re, data_im, N);
     return max_index;

@@ -64,7 +64,7 @@ void interrupt_vector(unsigned pc) {
     if((event_status & (1 << NRF_IRQ_PIN_2))) {
         // printk("NRF interrupt pin %d\n", NRF_IRQ_PIN_2);
         gpio_clear_event_detect(NRF_IRQ_PIN_2);
-        // nrf_clear();
+      
         // draw text to third display();
         uint32_t received_data_size = 1; ///////////////////
         float received_data[received_data_size];
@@ -75,6 +75,7 @@ void interrupt_vector(unsigned pc) {
             stats_display_draw_data(peak_to_peak, frequency);
             stats_display_show();
         }
+
 
     } 
     if(event_status & (1 << ADC_IRQ_PIN)) {
