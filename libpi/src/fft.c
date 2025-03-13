@@ -233,7 +233,7 @@ int compute(float data_re[], float data_im[], const unsigned int N) {
                         if ((magnitude > max_magnitude) && (pair > 0)) {
                             max_magnitude = magnitude;
                             max_index = pair;
-                            printk("max index is %d \n", max_index);
+                            // printk("max index is %d \n", max_index);
                         }
                         // printk("magnitude index %d is %f \n", pair, magnitude);
                         // printk("Magnitude 2 is %f, %f \n", pair*860/(2*128),magnitude);

@@ -109,14 +109,14 @@ void notmain(void) {
         nrf_rx_flush(c);
         nrf_recvq_flush(c);
 
-        printk("[Cloud Pi] Received data from main Pi: ");
-        for (int i = 0; i < 128; i++) {
-            // if (received_data[i] == -1) {
-                // break;
-            // }
-            printk("%f ", received_data[i]);
-        }
-        printk("\n");
+        // printk("[Cloud Pi] Received data from main Pi: ");
+        // for (int i = 0; i < 128; i++) {
+        //     // if (received_data[i] == -1) {
+        //         // break;
+        //     // }
+        //     printk("%f ", received_data[i]);
+        // }
+        // printk("\n");
 
 
 
@@ -154,7 +154,7 @@ void notmain(void) {
         // fft(received_data, , 128);
 
         send_data[0] = max_i * (860.0/(128)); // frequency
-        printk("Freq index is %d = %f Hz\n", max_i, send_data[0]);
+        // printk("Freq index is %d = %f Hz\n", max_i, send_data[0]);
 
         // send data to main Pi
         // printk("[Cloud Pi] Sending data to main Pi: %f\n", send_data[0]);
