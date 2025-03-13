@@ -21,7 +21,7 @@ COMMON_SRC += $(CS140E_FINAL_PROJ_PATH)/src/adc/interrupts-asm.S
 COMMON_SRC += nrf-hw-support.c nrf-public.c nrf-driver.c
 
 STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/kmalloc.o
-STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/staff-i2c.o
+# STAFF_OBJS += $(CS140E_FINAL_PROJ_PATH)/libpi/staff-objs/staff-i2c.o
 STAFF_OBJS += $(CS140E_2025_PATH)/libpi/staff-objs/staff-hw-spi.o
 
 # LIB_POST += $(CS140E_2025_PATH)/lib/libm.a

@@ -78,7 +78,7 @@ int i2c_write(unsigned addr, uint8_t data[], unsigned nbytes) {
     // Set done bit
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
-    return 0;
+    return status;
 }
 
 int i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
@@ -130,5 +130,5 @@ int i2c_read(unsigned addr, uint8_t data[], unsigned nbytes) {
     // Set done bit
     PUT32(BSC_S, (1 << 1));
     dev_barrier();
-    return 0;
+    return status;
 }
