@@ -1,4 +1,8 @@
 // Define the resolution of sin and cos
+#ifndef _FFT_H_
+#define _FFT_H_
+
+
 #include "rpi.h"
 #define RES 3
 #define PI 3.14159265358979323846
@@ -25,3 +29,6 @@ void rearrange(float data_re[], float data_im[], const unsigned int N);
 int compute(float data_re[], float data_im[], const unsigned int N);
 
 float sqrt(float x);
+
+
+#endif

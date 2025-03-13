@@ -29,7 +29,7 @@ void interrupt_vector(unsigned pc) {
         // draw text to third display();
         printk("NRF interrupt pin %d\n", NRF_IRQ_PIN_2);
         gpio_clear_event_detect(NRF_IRQ_PIN_2);
-        nrf_clear();/
+        // nrf_clear();/
     } 
     if(event_status & (1 << ADC_IRQ_PIN)) {
         // draw wave, send nrf data();
