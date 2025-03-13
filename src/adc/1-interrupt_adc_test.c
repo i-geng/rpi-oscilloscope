@@ -8,7 +8,8 @@ void notmain(){
     i2c_init();
 
     int interrupt_pin = 17;
-    ADC_STRUCT* adc = adc_init(interrupt_pin, PGA_6144);
+    kmalloc_init();
+    ADC_STRUCT* adc = adc_init(interrupt_pin, PGA_6144, AIN0);
 
     uint32_t start_time = timer_get_usec_raw(); // Start timer
     uint32_t last_time = start_time;

@@ -48,7 +48,7 @@ void adc_change_channel(ADC_STRUCT* adc, ADC_CHANNEL new_channel){
 
 }
 
-uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
+int16_t adc_read_reg(ADC_STRUCT* adc, int reg){
   uint8_t buf[2];
   
   // Check that we are pointing to the register
@@ -58,19 +58,19 @@ uint16_t adc_read_reg(ADC_STRUCT* adc, int reg){
   int status = i2c_read(ADC_ADDR, buf, 2);
   assert(status);
 
-  return (uint16_t) (buf[0] << 8)|buf[1];
+  return (int16_t) (buf[0] << 8)|buf[1];
 }
 
 float adc_read(ADC_STRUCT* adc){
-  uint16_t data = adc_read_reg(adc, CONVERSION_REG);
+  int data = adc_read_reg(adc, CONVERSION_REG);
+  float return_value = (((float) data) / (32768.0)) * adc->pga_val;
+  // return_value = (return_value > 12) ? 0 : return_value;
 
-  return (((float) data) / (32768.0)) * adc->pga_val;
+  return return_value;
 }
 
 
 ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain, ADC_CHANNEL channel){
-
-  kmalloc_init();
   ADC_STRUCT* adc = (ADC_STRUCT*) kmalloc(sizeof(ADC_STRUCT));
 
   adc->pga_gain = gain;
@@ -100,7 +100,9 @@ ADC_STRUCT* adc_init(int interrupt_pin, ADC_GAIN gain, ADC_CHANNEL channel){
   adc->config = config;
 
   // Configure device
+  printk("Configuring ADC...\n");
   adc_write_to_reg(adc, CONFIG_REG, config);
+  printk("sanity check\n");
   
   // Enable interrupts on valid
   uint16_t hi_thresh = 1 << 15;

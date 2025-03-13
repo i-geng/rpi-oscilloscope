@@ -16,7 +16,7 @@ extern const unsigned char standard_ascii_font[];
 
 enum {
   // Specify the number of displays
-  NUM_DISPLAYS = 1,
+  NUM_DISPLAYS = 2,
 
   // Statistics for a single SSD1306 display
   DISPLAY_WIDTH = 128,
@@ -149,8 +149,8 @@ void stats_display_fill_white(void);
 
 // Draw a pixel at coordinates (x, y) with specified color
 // Convention: top left corner of screen is pixel (0, 0)
-void multi_display_draw_pixel(uint16_t x, uint16_t y, color_t color);
-void stats_display_draw_pixel(uint16_t x, uint16_t y, color_t color);
+void multi_display_draw_pixel(int32_t x, int32_t y, color_t color);
+void stats_display_draw_pixel(int32_t x, int32_t y, color_t color);
 
 // Draw a horizontal line from (x_start, y) to (x_end, y), inclusive of both
 // endpoins Convention: top left corner of screen is pixel (0, 0)

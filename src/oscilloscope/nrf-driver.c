@@ -52,10 +52,13 @@
 //
 // enable crc, enable 2 byte
 #   define set_bit(x)       (1<<(x))
+#   define clr_bit(x)       (0<<(x))
 #   define enable_crc      set_bit(3)
 #   define crc_two_byte    set_bit(2)
 #   define pwr_up          set_bit(PWR_UP_BIT)
-#   define mask_int        set_bit(6)|set_bit(5)|set_bit(4)
+// #   define mask_int        set_bit(6)|set_bit(5)|set_bit(4)
+#   define mask_int         clr_bit(6)|set_bit(5)|set_bit(4) // IRQ on RX 
+
 enum {
     // pre-computed: can write into NRF_CONFIG to enable TX.
     tx_config = enable_crc | crc_two_byte | pwr_up | mask_int,
