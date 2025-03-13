@@ -127,7 +127,7 @@ void interrupt_vector(unsigned pc) {
                 // }
                 // printk("\n");
             }
-            printk("[Main Pi] Sent all fragments.\n");
+            // printk("[Main Pi] Sent all fragments.\n");
             
 
             float min_y = min(y_data, samples);
@@ -143,8 +143,12 @@ void interrupt_vector(unsigned pc) {
             // multi_display_draw_graph_tick(i);
             float vertical_min = -vertical_scaling_reading - 1;
             vertical_min = vertical_min < -6 ? -6 : vertical_min;
+            vertical_min = vertical_min > -1 ? -1 : vertical_min;
+
             float vertical_max = vertical_scaling_reading + 1;
             vertical_max = vertical_max > 6 ? 6 : vertical_max;
+            vertical_max = vertical_max < 1 ? 1 : vertical_max;
+
             float horizontal_max = ((uint16_t) horizontal_scaling_reading + 1) / 4.0 * 64.0;
             horizontal_max = horizontal_max > samples ? samples : horizontal_max;
             multi_display_configure_graph_axes(0, horizontal_max, vertical_min, vertical_max);
