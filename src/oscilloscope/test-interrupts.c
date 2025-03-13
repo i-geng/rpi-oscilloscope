@@ -3,6 +3,15 @@
 #include "test-interrupts.h"
 #include "timer-interrupt.h"
 #include "vector-base.h"
+#include "multi-display.h"
+#include "multi-i2c.h"
+
+
+float peak_to_peak = 0;
+float frequency = 0;
+float offset_reading = 0;
+float horizontal_scaling_reading = 0;
+float vertical_scaling_reading = 0;
 
 static inline void gpio_clear_event_detect(unsigned pin) {
     // Write to clear event
@@ -10,11 +19,38 @@ static inline void gpio_clear_event_detect(unsigned pin) {
     dev_barrier();
 }
 
+static float min(float *array, int size) {
+    float min = array[0];
+    for (int i = 1; i < size; i++) {
+        if (array[i] < min) {
+            min = array[i];
+        }
+    }
+    return min;
+}
+
+static float max(float *array, int size) {
+    float max = array[0];
+    for (int i = 1; i < size; i++) {
+        if (array[i] > max) {
+            max = array[i];
+        }
+    }
+    return max;
+}
 
 // default vector: just forwards it to the registered
 // handler see <test-interrupts.h> and the given test.
 void interrupt_vector(unsigned pc) {
     dev_barrier();
+    static uint32_t adc_irq_count;
+    // const uint32_t samples = 100;
+    static float y_data[samples];
+    static float x_data[samples];
+
+    for (int i = 0; i < samples; i++) {
+        x_data[i] = i;
+    }
 
     // Check that the interrupt was caused by the gpio
     unsigned GPIO_gpeds0 = 0x20200000 + 0x40;
@@ -26,16 +62,106 @@ void interrupt_vector(unsigned pc) {
     const uint32_t ADC_IRQ_PIN = 17;
 
     if((event_status & (1 << NRF_IRQ_PIN_2))) {
-        // draw text to third display();
-        printk("NRF interrupt pin %d\n", NRF_IRQ_PIN_2);
+        // printk("NRF interrupt pin %d\n", NRF_IRQ_PIN_2);
         gpio_clear_event_detect(NRF_IRQ_PIN_2);
-        // nrf_clear();/
+      
+        // draw text to third display();
+        uint32_t received_data_size = 1; ///////////////////
+        float received_data[received_data_size];
+
+        if (nrf_read_exact_noblk(nrf_client, received_data, received_data_size * sizeof(*received_data)) == received_data_size * sizeof(*received_data)) {
+            frequency = received_data[0];
+            stats_display_clear();
+            stats_display_draw_data(peak_to_peak, frequency);
+            stats_display_show();
+        }
+
+
     } 
     if(event_status & (1 << ADC_IRQ_PIN)) {
-        // draw wave, send nrf data();
-        printk("ADC interrupt pin %d\n", ADC_IRQ_PIN);
         gpio_clear_event_detect(ADC_IRQ_PIN);
+        float adc_read_data = (adc_read(adc) > 6) ? 0 : adc_read(adc);
+        y_data[adc_irq_count % samples] = adc_read_data - 2.5 + (offset_reading - 2.5);
+        adc_irq_count++;
+        if (adc_irq_count >= samples) {
+            adc_irq_count = 0;
 
+            adc_change_channel(adc, offset);
+            delay_ms(3);
+            offset_reading = adc_read(adc);
+            // printk("[Main Pi] Offset reading: %d\n", offset_reading);
+
+            adc_change_channel(adc, horizontal_scaling);
+            delay_ms(3);
+            horizontal_scaling_reading = adc_read(adc);
+            // printk("[Main Pi] Horizontal scaling reading: %d\n", horizontal_scaling_reading);
+
+            adc_change_channel(adc, vertical_scaling);
+            delay_ms(3);
+            vertical_scaling_reading = adc_read(adc);
+            // printk("[Main Pi] Vertical scaling reading: %d\n", vertical_scaling_reading);
+
+            adc_change_channel(adc, AIN0);
+            delay_ms(3);
+
+
+            // construct packet fragments and send each fragment one by one
+            uint32_t total_fragments = samples / 7 + (samples % 7 != 0);
+
+            for (int j = 0; j < total_fragments; j ++) {
+                fragment_t packet;
+                packet.fragment = j;
+                packet.total_fragments = total_fragments;
+                packet.packet_size = samples;
+                for (int k = 0; k < 7; k ++) {
+                    if (j * 7 + k < samples) {
+                        packet.data[k] = y_data[j * 7 + k];
+                    } else {
+                        packet.data[k] = -99; // -99 padding
+                    }
+                }
+                nrf_tx_send_noack(nrf_server, 0xe6e6e6, &packet, sizeof(packet)); // send data to address 0xe6e6e6 (RX address of processing Pi)
+                // printk("[Main Pi] Sent fragment #%d of %d.\n", packet.fragment, packet.total_fragments);
+                // printk("[Main Pi] Data: ");
+                // for (int k = 0; k < 7; k ++) {
+                //     printk("%f ", packet.data[k]);
+                // }
+                // printk("\n");
+            }
+            // printk("[Main Pi] Sent all fragments.\n");
+            
+
+            float min_y = min(y_data, samples);
+            float max_y = max(y_data, samples);
+            peak_to_peak = max_y - min_y;
+
+            stats_display_clear();
+            stats_display_draw_data(peak_to_peak, frequency);
+            stats_display_show();
+
+            disable_interrupts();
+            multi_display_clear();
+            // multi_display_draw_graph_tick(i);
+            float vertical_min = -vertical_scaling_reading - 1;
+            vertical_min = vertical_min < -6 ? -6 : vertical_min;
+            vertical_min = vertical_min > -1 ? -1 : vertical_min;
+
+            float vertical_max = vertical_scaling_reading + 1;
+            vertical_max = vertical_max > 6 ? 6 : vertical_max;
+            vertical_max = vertical_max < 1 ? 1 : vertical_max;
+
+            float horizontal_max = ((uint16_t) horizontal_scaling_reading + 1) / 4.0 * 64.0;
+            horizontal_max = horizontal_max > samples ? samples : horizontal_max;
+            multi_display_configure_graph_axes(0, horizontal_max, vertical_min, vertical_max);
+            multi_display_draw_graph_data(x_data, y_data, samples, COLOR_WHITE);
+            multi_display_draw_graph_tick(horizontal_max * 1.16);
+            // multi_display_draw_graph_axes();
+            multi_display_show();  
+
+            enable_interrupts();
+
+        }
+        
     }
     dev_barrier();
 }
